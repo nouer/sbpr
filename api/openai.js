@@ -1,20 +1,32 @@
-const { Readable } = require('stream');
+const { Readable } = require('node:stream');
 
 /**
  * Vercel Serverless Function: OpenAI reverse proxy (same-origin)
  *
+ * 目的:
  * - ブラウザから api.openai.com を直叩きするとCORSでブロックされるため、
- *   同一オリジン (/openai/*) -> このFunction -> OpenAI という経路にする。
- * - クライアントが送った Authorization ヘッダをそのままOpenAIへ転送する。
- * - stream(SSE) もそのまま中継できるよう、レスポンスボディをパイプする。
+ *   /openai/* (同一オリジン) -> /api/openai -> api.openai.com/* に中継する。
+ *
+ * 方針:
+ * - クライアントが送った Authorization をそのまま上流へ転送する（ユーザ自身のキー）。
+ * - stream(SSE) も可能な範囲でそのまま転送する。
  */
-module.exports = async (req, res) => {
-    // path param: /api/openai/<...path>
-    const parts = Array.isArray(req.query.path) ? req.query.path : [req.query.path].filter(Boolean);
-    const upstreamPath = parts.join('/');
-    const url = `https://api.openai.com/${upstreamPath}`;
+module.exports = async function handler(req, res) {
+    // preflight等が来た場合の保険（同一オリジンなら通常不要だが、環境差を吸収）
+    if (req.method === 'OPTIONS') {
+        res.statusCode = 204;
+        res.end();
+        return;
+    }
 
-    // Authorization は必須（なければ即エラー）
+    const path = (req.query && req.query.path) ? String(req.query.path) : '';
+    if (!path) {
+        res.statusCode = 400;
+        res.setHeader('content-type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify({ error: { message: 'Missing query param: path' } }));
+        return;
+    }
+
     const authorization = req.headers.authorization;
     if (!authorization) {
         res.statusCode = 400;
@@ -23,23 +35,24 @@ module.exports = async (req, res) => {
         return;
     }
 
-    // upstreamへ転送するヘッダ（必要最小限）
+    const upstreamUrl = `https://api.openai.com/${path.replace(/^\/+/, '')}`;
+    const method = (req.method || 'GET').toUpperCase();
+    const hasBody = !['GET', 'HEAD'].includes(method);
+
+    // 必要最小限のヘッダだけを転送
     const headers = {
         authorization,
     };
     if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
     if (req.headers.accept) headers.accept = req.headers.accept;
 
-    // fetchへreq(stream)を渡すには duplex 指定が必要（Nodeの制約）
-    const method = req.method || 'GET';
-    const hasBody = !['GET', 'HEAD'].includes(method.toUpperCase());
-
     let upstreamRes;
     try {
-        upstreamRes = await fetch(url, {
+        upstreamRes = await fetch(upstreamUrl, {
             method,
             headers,
             body: hasBody ? req : undefined,
+            // Node.js fetchの制約: request streamをbodyに渡す場合は duplex が必要
             duplex: hasBody ? 'half' : undefined,
         });
     } catch (e) {
@@ -51,19 +64,19 @@ module.exports = async (req, res) => {
 
     res.statusCode = upstreamRes.status;
 
-    // 主要ヘッダのみ透過（Vercel環境依存のため、過剰な転送は避ける）
+    // よく使うヘッダのみ透過（過剰な転送は避ける）
     const contentType = upstreamRes.headers.get('content-type');
     if (contentType) res.setHeader('content-type', contentType);
     const cacheControl = upstreamRes.headers.get('cache-control');
     if (cacheControl) res.setHeader('cache-control', cacheControl);
 
-    // ストリームをそのまま転送
+    // ストリームを可能な範囲でそのまま転送
     if (upstreamRes.body) {
+        // Web ReadableStream -> Node stream
         Readable.fromWeb(upstreamRes.body).pipe(res);
         return;
     }
 
-    // bodyがないケース（保険）
     const text = await upstreamRes.text().catch(() => '');
     res.end(text);
 };

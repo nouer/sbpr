@@ -125,14 +125,23 @@ WHO/ISH基準に基づく血圧分類:
 | 環境 | クライアント → | → upstream |
 |------|---------------|------------|
 | ローカル (nginx) | `/openai/*` | `api.openai.com/*` |
-| Vercel (rewrite + catch-all) | `/openai/:path*` → `/api/openai/:path*` | `api.openai.com/:path*` |
+| Vercel (rewrite) | `/openai/:path*` → `/api/openai?path=:path*` | `api.openai.com/:path*` |
 
-#### プロキシ実装
-* **Vercel**: `api/openai/[...path].js`（catch-all API route）
-  * Vercelのrewrite `/openai/:path*` → `/api/openai/:path*` で受け、パスセグメントを `req.query.path`（配列）から取得
-* **ローカル参照**: `local_app/api/openai.js`（nginx環境では未使用。nginxが直接OpenAIへプロキシ）
+#### クライアント側フォールバック
+Vercelの設定差異（Root Directory等）によりrewriteが機能しない場合に備え、
+クライアント（`script.js`）は以下の順に試行する:
+1. `/openai/v1/chat/completions`（vercel.json rewrite経由）
+2. 404の場合 → `/api/openai?path=v1/chat/completions`（Function直接呼び出し）
+
+#### プロキシ実装（3ファイル構成）
+| ファイル | 用途 |
+|---------|------|
+| `api/openai.js` | Vercel Function（クエリパラメータ `?path=` 方式） |
+| `api/openai/[...path].js` | Vercel Function（catch-all route方式、フォールバック用） |
+| `local_app/api/openai.js` | Vercel Root Directory が `local_app` の場合用 |
+
 * **OPTIONS preflight**: 204を返却（同一オリジンなら通常不要だが環境差を吸収）
-* **バリデーション**: パスセグメントと `Authorization` ヘッダの欠落時は 400 を返却
+* **バリデーション**: `path` パラメータと `Authorization` ヘッダの欠落時は 400 を返却
 * **リクエスト転送**: `req`（IncomingMessage）をそのまま `body` に渡し、`duplex: 'half'` で
   ストリームとして転送（`JSON.stringify` による再シリアライズは行わない）
 * **ヘッダ転送**: クライアントの `authorization`, `content-type`, `accept` のみ上流へ転送

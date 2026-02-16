@@ -41,7 +41,8 @@ sbpr/
 │   ├── e2e.test.js         # E2Eテスト（Puppeteer）
 │   └── version.js          # ビルド時自動生成
 ├── api/                    # Vercel Serverless Functions
-│   └── openai/[...path].js # OpenAI reverse proxy (catch-all route)
+│   ├── openai.js           # OpenAI reverse proxy (query param方式)
+│   └── openai/[...path].js # OpenAI reverse proxy (catch-all, fallback)
 ├── docs/                   # ドキュメント駆動開発用
 │   ├── requirements_definition.md
 │   ├── basic_design.md

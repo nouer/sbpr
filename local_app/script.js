@@ -1273,7 +1273,8 @@ async function callOpenAI(apiKey, messages) {
     renderAIChatMessages(true);
 
     try {
-        const response = await fetch('/openai/v1/chat/completions', {
+        const openAiPath = 'v1/chat/completions';
+        const requestInit = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1286,7 +1287,14 @@ async function callOpenAI(apiKey, messages) {
                 temperature: 0.7,
                 max_tokens: 2000
             })
-        });
+        };
+
+        // まず /openai/* を試行（vercel.json rewrite経由）
+        // 404の場合は /api/openai?path=* を直接試行（フォールバック）
+        let response = await fetch(`/openai/${openAiPath}`, requestInit);
+        if (response.status === 404) {
+            response = await fetch(`/api/openai?path=${encodeURIComponent(openAiPath)}`, requestInit);
+        }
 
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
