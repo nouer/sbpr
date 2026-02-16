@@ -193,6 +193,38 @@ body {
     white-space: nowrap;
 }
 
+/* === 3段階セレクタ === */
+.level-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.level-btn {
+    flex: 1;
+    padding: 6px 4px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    background: white;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--gray-600);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.level-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+}
+
+.level-btn.selected {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
 /* === ボタン === */
 .btn {
     display: inline-flex;
@@ -313,6 +345,19 @@ body {
     color: var(--gray-400);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.record-meta .extra-info {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.8em;
+    color: var(--gray-500);
+    margin-top: 2px;
+}
+
+.record-meta .extra-info span {
     white-space: nowrap;
 }
 
@@ -556,6 +601,166 @@ body {
     justify-content: flex-end;
 }
 
+/* === AI診断 === */
+.ai-disclaimer {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.85em;
+    color: #c2410c;
+    line-height: 1.5;
+}
+
+.ai-chat-messages {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.ai-msg {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.ai-msg.user {
+    justify-content: flex-end;
+}
+
+.ai-msg.assistant {
+    justify-content: flex-start;
+}
+
+.ai-msg-bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ai-msg.user .ai-msg-bubble {
+    background: var(--primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.ai-msg.assistant .ai-msg-bubble {
+    background: var(--gray-100);
+    color: var(--gray-800);
+    border-bottom-left-radius: 4px;
+}
+
+.ai-msg-label {
+    font-size: 0.7em;
+    color: var(--gray-400);
+    margin-bottom: 2px;
+}
+
+.ai-msg.user .ai-msg-label {
+    text-align: right;
+}
+
+.ai-input-area {
+    border-top: 1px solid var(--gray-200);
+    padding-top: 12px;
+    margin-top: 8px;
+}
+
+.ai-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.ai-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    font-size: 0.95em;
+    resize: vertical;
+    min-height: 44px;
+    font-family: inherit;
+    color: var(--gray-800);
+}
+
+.ai-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.ai-input:disabled {
+    background: var(--gray-50);
+    color: var(--gray-400);
+}
+
+.ai-status {
+    font-size: 0.8em;
+    color: var(--gray-500);
+    margin-bottom: 6px;
+    min-height: 1.2em;
+}
+
+.ai-status.loading {
+    color: var(--primary);
+}
+
+.ai-status.error {
+    color: var(--danger);
+}
+
+.ai-msg-bubble .ai-streaming-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 14px;
+    background: var(--gray-400);
+    margin-left: 2px;
+    animation: blink 0.8s infinite;
+    vertical-align: text-bottom;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* === 提案質問ボタン === */
+.ai-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    max-width: 85%;
+}
+
+.ai-suggestion-btn {
+    display: inline-block;
+    padding: 8px 14px;
+    border: 1px solid var(--primary);
+    border-radius: 20px;
+    background: white;
+    color: var(--primary);
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.1s;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.ai-suggestion-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.ai-suggestion-btn:active {
+    transform: scale(0.97);
+}
+
 /* === レスポンシブ === */
 @media (max-width: 480px) {
     .app-header h1 {
@@ -576,6 +781,11 @@ body {
 
     .form-row-3 {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .level-btn {
+        font-size: 0.75em;
+        padding: 5px 2px;
     }
 
     .record-item {

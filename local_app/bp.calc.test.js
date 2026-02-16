@@ -128,6 +128,38 @@ describe('validateBPInput - バリデーション', () => {
         const result = validateBPInput({ systolic: 120, diastolic: 80, pulse: null });
         expect(result.valid).toBe(true);
     });
+
+    test('UT-025: 体重の正常入力', () => {
+        const result = validateBPInput({ systolic: 120, diastolic: 80, weight: 65.5 });
+        expect(result.valid).toBe(true);
+    });
+
+    test('UT-026: 体重が範囲外（低）', () => {
+        const result = validateBPInput({ systolic: 120, diastolic: 80, weight: 15 });
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.includes('体重'))).toBe(true);
+    });
+
+    test('UT-027: 体重が範囲外（高）', () => {
+        const result = validateBPInput({ systolic: 120, diastolic: 80, weight: 310 });
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.includes('体重'))).toBe(true);
+    });
+
+    test('UT-028: 体重が未入力（任意なのでvalid）', () => {
+        const result = validateBPInput({ systolic: 120, diastolic: 80, weight: null });
+        expect(result.valid).toBe(true);
+    });
+
+    test('体重の境界値（20kg）', () => {
+        const result = validateBPInput({ systolic: 120, diastolic: 80, weight: 20 });
+        expect(result.valid).toBe(true);
+    });
+
+    test('体重の境界値（300kg）', () => {
+        const result = validateBPInput({ systolic: 120, diastolic: 80, weight: 300 });
+        expect(result.valid).toBe(true);
+    });
 });
 
 describe('calcAverage - 平均値計算', () => {

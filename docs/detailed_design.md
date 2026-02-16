@@ -18,9 +18,32 @@
 * **Delete**: `deleteRecord(id)` - 個別削除
 * **Delete**: `deleteAllRecords()` - 全件削除
 
-## 2. 計算ロジック (bp.calc.js)
+## 2. レコード構造とバリデーション
 
-### 2.1 血圧分類
+### 2.1 レコード構造の詳細
+* **id**: UUID v4文字列（自動生成）
+* **measuredAt**: ISO 8601形式の日時文字列
+* **systolic**: 最高血圧（整数, 50〜300）
+* **diastolic**: 最低血圧（整数, 30〜200）
+* **pulse**: 脈拍数（整数, 30〜250, null可）
+* **mood**: 気分（整数, 1=悪い, 2=普通, 3=良い, null=未選択）
+* **condition**: 体調（整数, 1=悪い, 2=普通, 3=良い, null=未選択）
+* **weight**: 体重（浮動小数点数, 20.0〜300.0, 小数点1桁まで, null=未選択）
+* **memo**: メモ（文字列, null可）
+* **createdAt**: 作成日時（ISO 8601形式）
+* **updatedAt**: 更新日時（ISO 8601形式）
+
+### 2.2 バリデーション仕様
+* **systolic**: 50〜300の整数、かつ systolic > diastolic
+* **diastolic**: 30〜200の整数
+* **pulse**: 30〜250の整数（入力時のみ検証、null可）
+* **weight**: 20.0〜300.0の浮動小数点数、小数点1桁まで（入力時のみ検証、null可）
+* **mood**: 1, 2, 3, または null
+* **condition**: 1, 2, 3, または null
+
+## 3. 計算ロジック (bp.calc.js)
+
+### 3.1 血圧分類
 WHO/ISH基準に基づく血圧分類:
 * 正常: 収縮期 < 120 かつ 拡張期 < 80
 * 正常高値: 収縮期 120-129 かつ 拡張期 < 80
@@ -29,32 +52,60 @@ WHO/ISH基準に基づく血圧分類:
 * II度高血圧: 収縮期 160-179 または 拡張期 100-109
 * III度高血圧: 収縮期 >= 180 または 拡張期 >= 110
 
-### 2.2 統計計算
+### 3.2 統計計算
 * `calcAverage(records)` - 平均値算出
 * `calcMinMax(records)` - 最大/最小値算出
 * `classifyBP(systolic, diastolic)` - 血圧分類判定
 
-## 3. エクスポート/インポート
+## 4. エクスポート/インポート
 
-### 3.1 エクスポート形式
+### 4.1 エクスポート形式
 ```json
 {
   "version": "1.0.0",
   "appName": "sbpr",
   "exportedAt": "2026-01-15T12:00:00.000Z",
   "recordCount": 100,
-  "records": [ ... ]
+  "records": [ ... ],
+  "profile": {
+    "birthday": "1980-01-15",
+    "gender": "male",
+    "height": "170"
+  },
+  "aiMemo": "高血圧の家族歴あり。降圧剤を服用中。"
 }
 ```
 
-### 3.2 インポート処理
+#### フィールド説明
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| version | string | 必須 | アプリバージョン |
+| appName | string | 必須 | 固定値 "sbpr" |
+| exportedAt | string | 必須 | エクスポート日時（ISO 8601） |
+| recordCount | number | 必須 | レコード件数 |
+| records | array | 必須 | 血圧記録の配列 |
+| profile | object | 任意 | プロフィール情報（後方互換のため任意） |
+| profile.birthday | string | 任意 | 生年月日（YYYY-MM-DD形式） |
+| profile.gender | string | 任意 | 性別（"male" / "female" / "other" / ""） |
+| profile.height | string | 任意 | 身長（cm） |
+| aiMemo | string | 任意 | AIに伝えたい備考（後方互換のため任意） |
+
+#### 後方互換性
+* `profile` と `aiMemo` はオプショナルフィールド
+* 旧バージョンのエクスポートファイル（`profile`/`aiMemo`なし）もインポート可能
+* 旧バージョンのアプリでインポートしても `profile`/`aiMemo` は無視されるだけで動作に影響なし
+
+### 4.2 インポート処理
 1. ファイル読み込み (FileReader API)
 2. JSON パース
 3. バリデーション（形式チェック）
 4. 既存データとのマージ（IDベースで重複排除）
 5. IndexedDBに一括書き込み
+6. `profile` が存在すればlocalStorageのプロフィール情報を上書き復元
+7. `aiMemo` が存在すればlocalStorageのAI備考を上書き復元
+8. 復元後、UIの入力フィールドに反映
 
-## 4. グラフ描画
+## 5. グラフ描画
 
 ### 4.1 Chart.js設定
 * タイプ: line
@@ -62,3 +113,49 @@ WHO/ISH基準に基づく血圧分類:
 * 基準線: annotation pluginで描画
 * X軸: 時系列（date adapter使用）
 * Y軸: mmHg / bpm
+
+## 6. AI診断機能
+
+### 5.1 API通信
+* **ローカル**: nginx reverse proxy (`/openai/*` → `api.openai.com`)
+* **Vercel**: Serverless Function (`/api/openai`)
+* **モデル**: gpt-4o-mini（コスト効率重視）
+* **ストリーミング**: SSE（Server-Sent Events）でリアルタイム表示
+
+### 5.2 プロンプト構築
+```
+システムプロンプト:
+あなたは血圧管理の健康アドバイザーです。
+ユーザーの血圧測定データに基づいて、わかりやすいアドバイスを提供してください。
+医療行為ではなく、一般的な健康アドバイスとして回答してください。
+
+ユーザープロンプト:
+【血圧測定データ】
+{記録データを日時順にフォーマット（日時、最高/最低血圧、脈拍、気分、体調、体重、メモ）}
+
+【統計情報】
+{平均値、最大/最小値、記録件数}
+
+【ユーザー備考】
+{設定の備考欄の内容}
+
+上記のデータに基づいて、血圧の傾向分析と健康アドバイスをお願いします。
+```
+
+### 5.3 会話継続
+* messages配列にassistant/userのロールで会話を蓄積
+* 追加質問時は全履歴をコンテキストとして送信
+* UIはチャット形式で表示
+
+### 5.4 提案質問（サジェスト）機能
+* AIレスポンスの末尾に `{{SUGGEST:質問テキスト}}` 形式で質問候補を3つ含める
+* `parseSuggestions(content)` で本文と質問候補を分離
+  * 戻り値: `{ mainContent: string, suggestions: string[] }`
+* ストリーミング中は候補マーカーを非表示にし、完了後にボタンとして描画
+* ボタンクリック時は `sendSuggestion(text)` で該当テキストをフォローアップ送信
+* 会話復元時は最後のアシスタントメッセージから候補を再描画
+* 新しいAI応答が生成されると前回の候補ボタンは消える
+
+### 5.5 設定データ保存（localStorage）
+* `sbpr_openai_api_key`: APIキー
+* `sbpr_ai_memo`: AI向け備考

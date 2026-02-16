@@ -20,6 +20,7 @@
         <button class="active" data-tab="record">記録</button>
         <button data-tab="chart">グラフ</button>
         <button data-tab="history">履歴</button>
+        <button data-tab="ai" id="tab-btn-ai" style="display:none;">AI診断</button>
         <button data-tab="settings">設定</button>
     </nav>
 
@@ -62,13 +63,36 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <!-- 空きスペース -->
+                        <label for="input-weight">体重</label>
+                        <div class="input-unit">
+                            <input type="number" id="input-weight" placeholder="65.0" min="20" max="300" step="0.1">
+                            <span class="unit">kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>気分</label>
+                        <div class="level-selector" id="input-mood">
+                            <button type="button" class="level-btn" data-value="3" title="良い">😊 良い</button>
+                            <button type="button" class="level-btn" data-value="2" title="普通">😐 普通</button>
+                            <button type="button" class="level-btn" data-value="1" title="悪い">😞 悪い</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>体調</label>
+                        <div class="level-selector" id="input-condition">
+                            <button type="button" class="level-btn" data-value="3" title="良い">♪ 良い</button>
+                            <button type="button" class="level-btn" data-value="2" title="普通">→ 普通</button>
+                            <button type="button" class="level-btn" data-value="1" title="悪い">↓ 悪い</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="input-memo">メモ</label>
-                    <textarea id="input-memo" rows="2" placeholder="服薬状況、体調など"></textarea>
+                    <textarea id="input-memo" rows="2" placeholder="服薬状況など"></textarea>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block" id="save-btn">記録を保存</button>
@@ -179,12 +203,107 @@
         </div>
 
         <div class="card">
+            <div class="card-title">プロフィール</div>
+
+            <div id="profile-message" class="message"></div>
+
+            <div class="setting-item">
+                <p>身体情報はAI診断のプロンプトに含まれ、より正確なアドバイスに活用されます。</p>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="input-birthday">生年月日</label>
+                        <input type="date" id="input-birthday">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-gender">性別</label>
+                        <select id="input-gender">
+                            <option value="">未設定</option>
+                            <option value="male">男性</option>
+                            <option value="female">女性</option>
+                            <option value="other">その他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-height">身長</label>
+                        <div class="input-unit">
+                            <input type="number" id="input-height" placeholder="170" min="50" max="250" step="0.1">
+                            <span class="unit">cm</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" id="save-profile-btn">プロフィールを保存</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">AI診断設定</div>
+
+            <div id="ai-settings-message" class="message"></div>
+
+            <div class="setting-item">
+                <h3>OpenAI APIキー</h3>
+                <p>AI診断機能を利用するには、OpenAI APIキーを設定してください。設定するとAI診断タブが表示されます。</p>
+                <div class="form-group">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" id="input-api-key" placeholder="sk-..." style="flex:1; padding:10px 12px; border:1px solid var(--gray-300); border-radius:6px; font-size:0.95em;">
+                        <button class="btn btn-sm btn-secondary" id="toggle-api-key-btn" type="button" title="表示切替">👁</button>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-sm" id="save-api-key-btn">APIキーを保存</button>
+                    <button class="btn btn-danger btn-sm" id="clear-api-key-btn">APIキーを削除</button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <h3>AIに伝えたい備考</h3>
+                <p>通院情報、服薬状況、持病など、AI診断の際に参考にしてほしい情報を記入してください。</p>
+                <div class="form-group">
+                    <textarea id="input-ai-memo" rows="4" placeholder="例: 高血圧の治療で月1回通院中。降圧剤（アムロジピン5mg）を毎朝服用。糖尿病の既往あり。"></textarea>
+                </div>
+                <button class="btn btn-primary btn-sm" id="save-ai-memo-btn">備考を保存</button>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="card-title">アプリ情報</div>
             <div class="setting-item">
                 <p>アプリ名: シンプル血圧記録 (sbpr)</p>
                 <p id="app-version-info">バージョン: ---</p>
                 <p id="app-build-info">ビルド日時: ---</p>
                 <p>データ保存先: ブラウザ IndexedDB</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI診断タブ -->
+    <div id="tab-ai" class="tab-content">
+        <div class="card">
+            <div class="ai-disclaimer">
+                ※ AI診断は医療行為ではありません。参考情報としてご利用ください。体調に不安がある場合は必ず医療機関を受診してください。
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">AI健康アドバイス</div>
+            <div id="ai-chat-area">
+                <div id="ai-chat-messages" class="ai-chat-messages">
+                    <div class="empty-state" id="ai-chat-empty">
+                        <div class="icon">🩺</div>
+                        <p>「診断を開始」を押すと、測定記録に基づいたAI健康アドバイスを受けられます。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-input-area">
+                <div id="ai-status" class="ai-status"></div>
+                <div class="ai-input-row" id="ai-followup-row" style="display:none;">
+                    <textarea id="ai-input" class="ai-input" rows="2" placeholder="追加で聞きたいことを入力..."></textarea>
+                    <button class="btn btn-primary" id="ai-send-btn">送信</button>
+                </div>
+                <div class="btn-group" style="margin-top: 8px;">
+                    <button class="btn btn-primary" id="ai-start-btn">診断を開始</button>
+                    <button class="btn btn-secondary" id="ai-clear-btn">会話をクリア</button>
+                </div>
             </div>
         </div>
     </div>
@@ -221,9 +340,33 @@
                         <input type="number" id="edit-diastolic" min="30" max="200" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="edit-pulse">脈拍数 (bpm)</label>
-                    <input type="number" id="edit-pulse" min="30" max="250">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-pulse">脈拍数 (bpm)</label>
+                        <input type="number" id="edit-pulse" min="30" max="250">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-weight">体重 (kg)</label>
+                        <input type="number" id="edit-weight" min="20" max="300" step="0.1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>気分</label>
+                        <div class="level-selector" id="edit-mood">
+                            <button type="button" class="level-btn" data-value="3" title="良い">😊 良い</button>
+                            <button type="button" class="level-btn" data-value="2" title="普通">😐 普通</button>
+                            <button type="button" class="level-btn" data-value="1" title="悪い">😞 悪い</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>体調</label>
+                        <div class="level-selector" id="edit-condition">
+                            <button type="button" class="level-btn" data-value="3" title="良い">♪ 良い</button>
+                            <button type="button" class="level-btn" data-value="2" title="普通">→ 普通</button>
+                            <button type="button" class="level-btn" data-value="1" title="悪い">↓ 悪い</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="edit-memo">メモ</label>

@@ -69,6 +69,14 @@ function validateBPInput(input) {
         }
     }
 
+    const weight = input.weight;
+    if (weight != null && weight !== '') {
+        const w = Number(weight);
+        if (isNaN(w) || w < 20 || w > 300) {
+            errors.push('体重は20〜300kgの範囲で入力してください');
+        }
+    }
+
     if (errors.length === 0) {
         const sys = Number(systolic);
         const dia = Number(diastolic);

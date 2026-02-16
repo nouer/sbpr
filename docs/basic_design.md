@@ -40,11 +40,18 @@ sbpr/
   "systolic": 125,
   "diastolic": 82,
   "pulse": 72,
+  "mood": 2,
+  "condition": 2,
+  "weight": 65.5,
   "memo": "朝食前に測定",
   "createdAt": "2026-01-15T08:31:00.000Z",
   "updatedAt": "2026-01-15T08:31:00.000Z"
 }
 ```
+
+* **mood**: 気分（1=悪い, 2=普通, 3=良い, null=未選択）
+* **condition**: 体調（1=悪い, 2=普通, 3=良い, null=未選択）
+* **weight**: 体重（kg, 20.0〜300.0, 小数点1桁まで, null=未選択）
 
 ## 3. 画面設計
 
