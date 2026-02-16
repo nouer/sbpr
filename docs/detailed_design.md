@@ -116,11 +116,34 @@ WHO/ISH基準に基づく血圧分類:
 
 ## 6. AI診断機能
 
-### 5.1 API通信
-* **ローカル**: nginx reverse proxy (`/openai/*` → `api.openai.com`)
-* **Vercel**: Serverless Function (`/api/openai`)
-* **モデル**: gpt-4o-mini（コスト効率重視）
-* **ストリーミング**: SSE（Server-Sent Events）でリアルタイム表示
+### 6.1 API通信（OpenAI reverse proxy）
+
+ブラウザから `api.openai.com` を直接呼び出すとCORSでブロックされるため、
+同一オリジンのプロキシ経由で中継する。
+
+#### 経路
+| 環境 | クライアント → | → upstream |
+|------|---------------|------------|
+| ローカル (nginx) | `/openai/*` | `api.openai.com/*` |
+| Vercel (rewrite) | `/openai/:path*` → `/api/openai?path=:path*` | `api.openai.com/:path*` |
+
+#### プロキシ実装 (`api/openai.js` / `local_app/api/openai.js`)
+* 2ファイルは同一内容（Vercelの Root Directory 設定差異を吸収するための二重配置）
+* **OPTIONS preflight**: 204を返却（同一オリジンなら通常不要だが環境差を吸収）
+* **バリデーション**: `path` クエリパラメータと `Authorization` ヘッダの欠落時は 400 を返却
+* **リクエスト転送**: `req`（IncomingMessage）をそのまま `body` に渡し、`duplex: 'half'` で
+  ストリームとして転送（`JSON.stringify` による再シリアライズは行わない）
+* **ヘッダ転送**: クライアントの `authorization`, `content-type`, `accept` のみ上流へ転送
+* **レスポンス転送**: `Readable.fromWeb(upstreamRes.body).pipe(res)` で
+  Web ReadableStream → Node stream 変換し効率的にストリーミング転送
+* **ステータス透過**: upstream の HTTP ステータスコードをそのまま返却
+* **エラー処理**: upstream 接続失敗時は 502 (Bad Gateway) を返却
+
+#### モデル
+* gpt-4o-mini（コスト効率重視）
+
+#### ストリーミング
+* SSE（Server-Sent Events）でリアルタイム表示
 
 ### 5.2 プロンプト構築
 ```
