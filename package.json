@@ -1,6 +1,6 @@
 {
   "name": "sbpr",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "シンプル血圧測定記録 (Simple Blood Pressure Recorder)",
   "main": "local_app/script.js",
   "scripts": {

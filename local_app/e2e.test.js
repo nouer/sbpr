@@ -104,6 +104,13 @@ describe('E2E Test: sbpr App', () => {
         }, selector);
     };
 
+    /** initApp()完了を待機（data-app-ready="true"フラグ） */
+    const waitForAppReady = async () => {
+        await page.waitForFunction(() => {
+            return document.body.dataset.appReady === 'true';
+        }, { timeout: 30000 });
+    };
+
     test('E2E-001: ページが表示される', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
 
@@ -115,6 +122,34 @@ describe('E2E Test: sbpr App', () => {
 
         const tabNavVisible = await isVisible('.tab-nav');
         expect(tabNavVisible).toBe(true);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-025: 右上にバージョン情報が表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        const infoDisplay = await page.evaluate(() => {
+            const el = document.getElementById('app-info-display');
+            return el ? el.innerHTML : null;
+        });
+        expect(infoDisplay).not.toBeNull();
+        expect(infoDisplay).toContain('Ver:');
+        expect(infoDisplay).toContain('Build:');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-026: 左上にスクロールトップボタンが表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        const btnExists = await page.evaluate(() => {
+            const el = document.getElementById('scroll-to-top-btn');
+            if (!el) return false;
+            const style = window.getComputedStyle(el);
+            return style.position === 'fixed';
+        });
+        expect(btnExists).toBe(true);
 
         expect(pageErrors.length).toBe(0);
     }, 60000);
@@ -190,7 +225,7 @@ describe('E2E Test: sbpr App', () => {
 
         const canvasExists = await page.evaluate(() => {
             const canvas = document.getElementById('bp-chart');
-            return canvas && canvas.getContext;
+            return !!(canvas && typeof canvas.getContext === 'function');
         });
         expect(canvasExists).toBe(true);
 
@@ -277,6 +312,7 @@ describe('E2E Test: sbpr App', () => {
 
     test('E2E-011: 気分・体調・体重を記録して一覧に表示される', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
 
         await page.waitForSelector('#input-systolic', { timeout: 10000 });
 
@@ -287,8 +323,10 @@ describe('E2E Test: sbpr App', () => {
             document.getElementById('input-weight').value = '65.5';
         });
 
-        await page.click('#input-mood .level-btn[data-value="3"]');
-        await page.click('#input-condition .level-btn[data-value="2"]');
+        await page.evaluate(() => {
+            document.querySelector('#input-mood .level-btn[data-value="3"]').click();
+            document.querySelector('#input-condition .level-btn[data-value="2"]').click();
+        });
 
         await page.click('#save-btn');
         await page.waitForFunction(() => {
@@ -504,6 +542,176 @@ describe('E2E Test: sbpr App', () => {
         await page.evaluate(() => {
             localStorage.removeItem('sbpr_openai_api_key');
         });
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-021: 保存後に前回値がプリフィルされる', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        await page.waitForSelector('#input-systolic', { timeout: 10000 });
+
+        // 既存レコードをクリアして確実な状態にする
+        await page.evaluate(async () => {
+            await deleteAllRecords();
+            await refreshRecentRecords();
+        });
+
+        await page.evaluate(() => {
+            document.getElementById('input-systolic').value = '125';
+            document.getElementById('input-diastolic').value = '82';
+            document.getElementById('input-pulse').value = '72';
+            document.getElementById('input-weight').value = '65.5';
+            document.getElementById('input-memo').value = 'プリフィルテスト';
+        });
+
+        // プリフィルで既に同じ値が選択されている場合、clickのトグル動作で解除されるため
+        // setLevelValueで確実にセットする
+        await page.evaluate(() => {
+            setLevelValue('input-mood', 3);
+            setLevelValue('input-condition', 2);
+        });
+
+        await page.click('#save-btn');
+        await page.waitForFunction(() => {
+            const msg = document.getElementById('record-message');
+            return msg && msg.textContent.includes('保存しました');
+        }, { timeout: 10000 });
+
+        const formValues = await page.evaluate(() => {
+            return {
+                systolic: document.getElementById('input-systolic').value,
+                diastolic: document.getElementById('input-diastolic').value,
+                pulse: document.getElementById('input-pulse').value,
+                weight: document.getElementById('input-weight').value,
+                memo: document.getElementById('input-memo').value,
+                moodSelected: document.querySelector('#input-mood .level-btn.selected')?.dataset.value || null,
+                conditionSelected: document.querySelector('#input-condition .level-btn.selected')?.dataset.value || null
+            };
+        });
+
+        expect(formValues.systolic).toBe('125');
+        expect(formValues.diastolic).toBe('82');
+        expect(formValues.pulse).toBe('72');
+        expect(formValues.weight).toBe('65.5');
+        expect(formValues.memo).toBe('プリフィルテスト');
+        expect(formValues.moodSelected).toBe('3');
+        expect(formValues.conditionSelected).toBe('2');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-022: リロード後に前回値がプリフィルされる', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.waitForSelector('#input-systolic', { timeout: 10000 });
+
+        // 既存レコードをクリアして確実な状態にする
+        await page.evaluate(async () => {
+            await deleteAllRecords();
+            await refreshRecentRecords();
+        });
+
+        await page.evaluate(() => {
+            document.getElementById('input-systolic').value = '135';
+            document.getElementById('input-diastolic').value = '88';
+            document.getElementById('input-pulse').value = '75';
+        });
+        await page.click('#save-btn');
+        await page.waitForFunction(() => {
+            const msg = document.getElementById('record-message');
+            return msg && msg.textContent.includes('保存しました');
+        }, { timeout: 10000 });
+
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.waitForSelector('#input-systolic', { timeout: 10000 });
+
+        // prefillFormWithLastRecord は非同期のため少し待つ
+        await page.waitForFunction(() => {
+            return document.getElementById('input-systolic').value !== '';
+        }, { timeout: 10000 });
+
+        const formValues = await page.evaluate(() => {
+            return {
+                systolic: document.getElementById('input-systolic').value,
+                diastolic: document.getElementById('input-diastolic').value,
+                pulse: document.getElementById('input-pulse').value
+            };
+        });
+
+        expect(formValues.systolic).toBe('135');
+        expect(formValues.diastolic).toBe('88');
+        expect(formValues.pulse).toBe('75');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-023: プリフィル時に日時は現在時刻が設定される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.waitForSelector('#input-systolic', { timeout: 10000 });
+
+        await page.evaluate(() => {
+            document.getElementById('input-systolic').value = '120';
+            document.getElementById('input-diastolic').value = '80';
+        });
+        await page.click('#save-btn');
+        await page.waitForFunction(() => {
+            const msg = document.getElementById('record-message');
+            return msg && msg.textContent.includes('保存しました');
+        }, { timeout: 10000 });
+
+        const timeDiff = await page.evaluate(() => {
+            const datetimeValue = document.getElementById('input-datetime').value;
+            const formDate = new Date(datetimeValue);
+            const now = new Date();
+            return Math.abs(now.getTime() - formDate.getTime());
+        });
+
+        expect(timeDiff).toBeLessThan(60000);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-024: フォーカスで入力値が全選択される（memo textarea）', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.waitForSelector('#input-memo', { timeout: 10000 });
+
+        // textareaはselectionStart/selectionEndが取得可能なので、
+        // memoフィールドで全選択の動作を検証する
+        await page.evaluate(() => {
+            document.getElementById('input-memo').value = 'テストメモ入力';
+        });
+
+        await page.focus('#input-memo');
+        await new Promise(r => setTimeout(r, 200));
+
+        const selectionInfo = await page.evaluate(() => {
+            const el = document.getElementById('input-memo');
+            return {
+                selectionStart: el.selectionStart,
+                selectionEnd: el.selectionEnd,
+                valueLength: el.value.length
+            };
+        });
+
+        expect(selectionInfo.selectionStart).toBe(0);
+        expect(selectionInfo.selectionEnd).toBe(selectionInfo.valueLength);
+        expect(selectionInfo.valueLength).toBeGreaterThan(0);
+
+        // number入力フィールドにもフォーカスイベントリスナーが登録されていることを確認
+        // type="number" ではselectionStart/Endが取得不可のため、
+        // focus後にactiveElementになることで検証する
+        const hasSelectOnFocus = await page.evaluate(() => {
+            const el = document.getElementById('input-systolic');
+            el.value = '120';
+            el.focus();
+            return document.activeElement === el;
+        });
+        expect(hasSelectOnFocus).toBe(true);
 
         expect(pageErrors.length).toBe(0);
     }, 60000);

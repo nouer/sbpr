@@ -1,5 +1,23 @@
 # 詳細設計書
 
+## 0. 固定UI要素
+
+### 0.1 ページ先頭へ戻るボタン
+* **配置**: `position: fixed; top: 8px; left: 8px; z-index: 9999`
+* **HTML**: `<button id="scroll-to-top-btn">` にSVG上矢印アイコンを内包
+* **動作**: クリック時に `window.scrollTo({ top: 0, behavior: 'smooth' })` を実行
+* **初期化**: `initScrollToTop()` で `click` イベントリスナーを登録
+* **印刷対応**: `no-print` クラスにより `@media print` で非表示
+
+### 0.2 バージョン情報表示
+* **配置**: `position: fixed; top: 6px; right: 10px; z-index: 9999`
+* **HTML**: `<div id="app-info-display" class="app-info-display no-print">`
+* **表示内容**: `Ver: X.X.X` と `Build: YYYY-MM-DD HH:MM:SS JST` の2行
+* **データソース**: `window.APP_INFO`（`version.js` からロード、ビルド時自動生成）
+* **初期化**: `initVersionInfo()` で `innerHTML` を設定
+* **印刷対応**: `no-print` クラスにより `@media print` で非表示
+* **`pointer-events: none`**: テキスト選択やクリック対象にならないようにする
+
 ## 1. IndexedDB操作
 
 ### 1.1 データベース初期化
@@ -105,7 +123,47 @@ WHO/ISH基準に基づく血圧分類:
 7. `aiMemo` が存在すればlocalStorageのAI備考を上書き復元
 8. 復元後、UIの入力フィールドに反映
 
-## 5. グラフ描画
+## 5. 入力フォームのUX改善
+
+### 5.1 前回入力値のプリフィル
+
+新規入力時、直近の血圧記録がある場合、入力日時を除いたフィールド（最高血圧、最低血圧、脈拍数、体重、気分、体調、メモ）に前回の値をプリフィル（自動入力）する。
+
+#### 動作タイミング
+* **アプリ初期化時**: `initApp()` 内で `prefillFormWithLastRecord()` を呼び出し
+* **記録保存後**: `saveRecord()` 内で `prefillFormWithLastRecord()` を呼び出し
+
+#### プリフィル対象フィールド
+| フィールド | プリフィル | 備考 |
+|-----------|----------|------|
+| 測定日時 | 対象外 | 常に現在時刻を設定（`setDefaultDateTime()`） |
+| 最高血圧 | 対象 | `last.systolic` |
+| 最低血圧 | 対象 | `last.diastolic` |
+| 脈拍数 | 対象 | `last.pulse`（null時は空） |
+| 体重 | 対象 | `last.weight`（null時は空） |
+| 気分 | 対象 | `last.mood`（null時は未選択） |
+| 体調 | 対象 | `last.condition`（null時は未選択） |
+| メモ | 対象 | `last.memo`（null時は空） |
+
+#### 実装関数
+* `prefillFormWithLastRecord()` — IndexedDBから最新レコードを取得し、各フィールドにセット
+
+### 5.2 フォーカス時の全選択
+
+入力テキストフィールドにフォーカスが当たると内容が選択状態になり、そのまま入力すると値が置換される。
+
+#### 対象フィールド
+* `input-systolic`（最高血圧）
+* `input-diastolic`（最低血圧）
+* `input-pulse`（脈拍数）
+* `input-weight`（体重）
+* `input-memo`（メモ・textarea）
+
+#### 実装
+* `initSelectOnFocus()` — 各入力要素に `focus` イベントリスナーを登録し、`el.select()` を呼び出す
+* `initApp()` 内で1回呼び出し
+
+## 6. グラフ描画
 
 ### 4.1 Chart.js設定
 * タイプ: line

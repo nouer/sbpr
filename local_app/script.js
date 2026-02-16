@@ -219,6 +219,7 @@ function levelText(value) {
  */
 async function initApp() {
     initVersionInfo();
+    initScrollToTop();
     initTabs();
     initForm();
     initChartControls();
@@ -234,7 +235,10 @@ async function initApp() {
     initLevelSelector('input-condition');
     initLevelSelector('edit-mood');
     initLevelSelector('edit-condition');
+    initSelectOnFocus();
     await refreshAll();
+    await prefillFormWithLastRecord();
+    document.body.dataset.appReady = 'true';
 }
 
 /**
@@ -242,10 +246,14 @@ async function initApp() {
  */
 function initVersionInfo() {
     const info = window.APP_INFO || {};
-    const versionEl = document.getElementById('version-info');
-    if (versionEl && info.version) {
-        versionEl.textContent = `v${info.version}`;
+
+    // 右上固定のバージョン情報表示
+    const infoDisplay = document.getElementById('app-info-display');
+    if (infoDisplay && info.version) {
+        infoDisplay.innerHTML = `Ver: ${info.version}<br>Build: ${info.buildTime || '---'}`;
     }
+
+    // 設定タブのアプリ情報
     const versionDetail = document.getElementById('app-version-info');
     if (versionDetail && info.version) {
         versionDetail.textContent = `バージョン: ${info.version}`;
@@ -253,6 +261,26 @@ function initVersionInfo() {
     const buildDetail = document.getElementById('app-build-info');
     if (buildDetail && info.buildTime) {
         buildDetail.textContent = `ビルド日時: ${info.buildTime}`;
+    }
+}
+
+/**
+ * ページ先頭へ戻るボタンを初期化
+ */
+function initScrollToTop() {
+    try {
+        const scrollTopBtn = document.getElementById('scroll-to-top-btn');
+        if (scrollTopBtn) {
+            scrollTopBtn.addEventListener('click', () => {
+                try {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                } catch (e) {
+                    window.scrollTo(0, 0);
+                }
+            });
+        }
+    } catch (e) {
+        // ボタン初期化失敗時は無視
     }
 }
 
@@ -297,6 +325,55 @@ function initForm() {
 function setDefaultDateTime() {
     const input = document.getElementById('input-datetime');
     input.value = formatDateTimeLocal(new Date());
+}
+
+/**
+ * 前回の入力値でフォームをプリフィル（入力日時を除く）
+ * 直近の記録がある場合、その値をフォームにセットする。
+ * 日時は常に現在時刻を設定する。
+ */
+async function prefillFormWithLastRecord() {
+    try {
+        const records = await getAllRecords();
+        if (records.length === 0) return;
+
+        const last = records[0];
+        document.getElementById('input-systolic').value = last.systolic;
+        document.getElementById('input-diastolic').value = last.diastolic;
+        document.getElementById('input-pulse').value = last.pulse != null ? last.pulse : '';
+        document.getElementById('input-weight').value = last.weight != null ? last.weight : '';
+        document.getElementById('input-memo').value = last.memo || '';
+        setLevelValue('input-mood', last.mood || null);
+        setLevelValue('input-condition', last.condition || null);
+    } catch (e) {
+        // プリフィル失敗時は空のまま
+    }
+}
+
+/**
+ * フォーカス時に入力内容を全選択するイベントを設定
+ * number/text入力欄にフォーカスが当たると内容が選択状態になり、
+ * そのまま入力すると値が置換される。
+ */
+function initSelectOnFocus() {
+    const targetIds = [
+        'input-systolic', 'input-diastolic', 'input-pulse', 'input-weight'
+    ];
+    targetIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('focus', () => {
+                el.select();
+            });
+        }
+    });
+
+    const memo = document.getElementById('input-memo');
+    if (memo) {
+        memo.addEventListener('focus', () => {
+            memo.select();
+        });
+    }
 }
 
 /**
@@ -358,16 +435,9 @@ async function saveRecord() {
         await addRecord(record);
         showMessage('record-message', '記録を保存しました', 'success');
 
-        document.getElementById('input-systolic').value = '';
-        document.getElementById('input-diastolic').value = '';
-        document.getElementById('input-pulse').value = '';
-        document.getElementById('input-weight').value = '';
-        document.getElementById('input-memo').value = '';
-        setLevelValue('input-mood', null);
-        setLevelValue('input-condition', null);
         setDefaultDateTime();
-
         await refreshAll();
+        await prefillFormWithLastRecord();
     } catch (error) {
         showMessage('record-message', '保存に失敗しました: ' + error.message, 'error');
     }
@@ -785,7 +855,7 @@ async function exportData() {
         const aiMemo = getAIMemo();
         const aiModel = getSelectedAiModel();
         const data = {
-            version: (window.APP_INFO || {}).version || '0.1.0',
+            version: (window.APP_INFO || {}).version || '1.0.0',
             appName: 'sbpr',
             exportedAt: new Date().toISOString(),
             recordCount: records.length,

@@ -10,10 +10,20 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 <body>
+    <!-- 左上固定: ページ先頭へ戻るボタン -->
+    <button id="scroll-to-top-btn" type="button" class="scroll-to-top no-print" aria-label="一番上に移動" title="一番上に移動">
+        <svg class="scroll-to-top-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 19V7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M6 12L12 6L18 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+    </button>
+
+    <!-- 右上固定: バージョン情報 -->
+    <div id="app-info-display" class="app-info-display no-print"></div>
+
     <!-- ヘッダー -->
     <header class="app-header">
         <h1>シンプル血圧記録</h1>
-        <span class="version-info" id="version-info"></span>
     </header>
 
     <!-- タブナビゲーション -->
