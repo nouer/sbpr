@@ -919,14 +919,16 @@ const LS_KEY_GENDER = 'sbpr_gender';
 const LS_KEY_HEIGHT = 'sbpr_height';
 
 const DEFAULT_AI_MODEL = 'gpt-4o-mini';
+// useMaxCompletionTokens: true = max_completion_tokens を使用（新しいモデル）
+//                         false = max_tokens を使用（レガシーモデル）
 const AI_MODEL_CATALOG = {
-    'gpt-4o-mini': { label: 'GPT-4o mini（低コスト）', contextWindow: 128000, inputPrice: 0.15, outputPrice: 0.60 },
-    'gpt-4.1-mini': { label: 'GPT-4.1 mini', contextWindow: 1047576, inputPrice: 0.40, outputPrice: 1.60 },
-    'gpt-4.1': { label: 'GPT-4.1（1Mコンテキスト）', contextWindow: 1047576, inputPrice: 2.00, outputPrice: 8.00 },
-    'gpt-4o': { label: 'GPT-4o', contextWindow: 128000, inputPrice: 2.50, outputPrice: 10.00 },
-    'gpt-5-mini': { label: 'GPT-5 mini（高速）', contextWindow: 400000, inputPrice: 1.10, outputPrice: 4.40 },
-    'gpt-5': { label: 'GPT-5', contextWindow: 400000, inputPrice: 2.00, outputPrice: 8.00 },
-    'gpt-5.2': { label: 'GPT-5.2（最新）', contextWindow: 400000, inputPrice: 2.00, outputPrice: 8.00 }
+    'gpt-4o-mini': { label: 'GPT-4o mini（低コスト）', contextWindow: 128000, inputPrice: 0.15, outputPrice: 0.60, useMaxCompletionTokens: false },
+    'gpt-4.1-mini': { label: 'GPT-4.1 mini', contextWindow: 1047576, inputPrice: 0.40, outputPrice: 1.60, useMaxCompletionTokens: true },
+    'gpt-4.1': { label: 'GPT-4.1（1Mコンテキスト）', contextWindow: 1047576, inputPrice: 2.00, outputPrice: 8.00, useMaxCompletionTokens: true },
+    'gpt-4o': { label: 'GPT-4o', contextWindow: 128000, inputPrice: 2.50, outputPrice: 10.00, useMaxCompletionTokens: false },
+    'gpt-5-mini': { label: 'GPT-5 mini（高速）', contextWindow: 400000, inputPrice: 1.10, outputPrice: 4.40, useMaxCompletionTokens: true },
+    'gpt-5': { label: 'GPT-5', contextWindow: 400000, inputPrice: 2.00, outputPrice: 8.00, useMaxCompletionTokens: true },
+    'gpt-5.2': { label: 'GPT-5.2（最新）', contextWindow: 400000, inputPrice: 2.00, outputPrice: 8.00, useMaxCompletionTokens: true }
 };
 
 function getSelectedAiModel() {
@@ -1325,6 +1327,24 @@ async function sendFollowUp() {
     await callOpenAI(apiKey, messages);
 }
 
+function buildChatRequestBody(messages) {
+    const modelId = getSelectedAiModel();
+    const meta = AI_MODEL_CATALOG[modelId];
+    const useNew = meta ? meta.useMaxCompletionTokens : false;
+    const body = {
+        model: modelId,
+        messages: messages,
+        stream: true,
+        temperature: 0.7
+    };
+    if (useNew) {
+        body.max_completion_tokens = 2000;
+    } else {
+        body.max_tokens = 2000;
+    }
+    return body;
+}
+
 async function callOpenAI(apiKey, messages) {
     aiIsStreaming = true;
     setAIStatus('AIが考えています...', 'loading');
@@ -1342,13 +1362,7 @@ async function callOpenAI(apiKey, messages) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
             },
-            body: JSON.stringify({
-                model: getSelectedAiModel(),
-                messages: messages,
-                stream: true,
-                temperature: 0.7,
-                max_tokens: 2000
-            })
+            body: JSON.stringify(buildChatRequestBody(messages))
         };
 
         // まず /openai/* を試行（vercel.json rewrite経由）

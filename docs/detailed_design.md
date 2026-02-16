@@ -155,20 +155,25 @@ Vercelの設定差異（Root Directory等）によりrewriteが機能しない�
 * デフォルト: `gpt-4o-mini`（コスト効率重視）
 * 選択肢は `AI_MODEL_CATALOG` で定義:
 
-| model id | 表示名 | コンテキスト上限 | 入力単価/1M | 出力単価/1M |
-|----------|--------|-----------------|------------|------------|
-| `gpt-4o-mini` | GPT-4o mini（低コスト） | 128,000 | $0.15 | $0.60 |
-| `gpt-4.1-mini` | GPT-4.1 mini | 1,047,576 | $0.40 | $1.60 |
-| `gpt-4.1` | GPT-4.1（1Mコンテキスト） | 1,047,576 | $2.00 | $8.00 |
-| `gpt-4o` | GPT-4o | 128,000 | $2.50 | $10.00 |
-| `gpt-5-mini` | GPT-5 mini（高速） | 400,000 | $1.10 | $4.40 |
-| `gpt-5` | GPT-5 | 400,000 | $2.00 | $8.00 |
-| `gpt-5.2` | GPT-5.2（最新） | 400,000 | $2.00 | $8.00 |
+| model id | 表示名 | コンテキスト上限 | 入力単価/1M | 出力単価/1M | トークン上限パラメータ |
+|----------|--------|-----------------|------------|------------|---------------------|
+| `gpt-4o-mini` | GPT-4o mini（低コスト） | 128,000 | $0.15 | $0.60 | `max_tokens` |
+| `gpt-4.1-mini` | GPT-4.1 mini | 1,047,576 | $0.40 | $1.60 | `max_completion_tokens` |
+| `gpt-4.1` | GPT-4.1（1Mコンテキスト） | 1,047,576 | $2.00 | $8.00 | `max_completion_tokens` |
+| `gpt-4o` | GPT-4o | 128,000 | $2.50 | $10.00 | `max_tokens` |
+| `gpt-5-mini` | GPT-5 mini（高速） | 400,000 | $1.10 | $4.40 | `max_completion_tokens` |
+| `gpt-5` | GPT-5 | 400,000 | $2.00 | $8.00 | `max_completion_tokens` |
+| `gpt-5.2` | GPT-5.2（最新） | 400,000 | $2.00 | $8.00 | `max_completion_tokens` |
 
 * 選択値は `localStorage` キー `sbpr_ai_model` に自動保存
 * `getSelectedAiModel()` で取得、`setSelectedAiModel(modelId)` で保存
 * カタログに存在しない値が保存されている場合はデフォルト（`gpt-4o-mini`）にフォールバック
 * エクスポート/インポートにもモデル設定を含む
+
+#### トークン上限パラメータの使い分け
+* GPT-4.1系・GPT-5系: `max_completion_tokens` を使用（`max_tokens` は非対応）
+* GPT-4o系: `max_tokens` を使用（レガシー互換）
+* `buildChatRequestBody(messages)` で `AI_MODEL_CATALOG` の `useMaxCompletionTokens` フラグに基づき自動切替
 
 #### ストリーミング
 * SSE（Server-Sent Events）でリアルタイム表示
