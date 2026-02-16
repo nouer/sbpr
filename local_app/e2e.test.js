@@ -327,7 +327,7 @@ describe('E2E Test: sbpr App', () => {
         expect(pageErrors.length).toBe(0);
     }, 60000);
 
-    test('E2E-015: エクスポートJSONにプロフィールとAI備考が含まれる', async () => {
+    test('E2E-015: エクスポートJSONにプロフィールとAI備考とAIモデルが含まれる', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
 
         await page.evaluate(() => {
@@ -335,16 +335,19 @@ describe('E2E Test: sbpr App', () => {
             localStorage.setItem('sbpr_gender', 'male');
             localStorage.setItem('sbpr_height', '170');
             localStorage.setItem('sbpr_ai_memo', '降圧剤を服用中');
+            localStorage.setItem('sbpr_ai_model', 'gpt-4.1');
         });
 
         const exportData = await page.evaluate(async () => {
             const records = await getAllRecords();
             const profile = getProfile();
             const aiMemo = getAIMemo();
+            const aiModel = getSelectedAiModel();
             return {
                 hasProfile: profile !== undefined && profile !== null,
                 profile: profile,
                 aiMemo: aiMemo,
+                aiModel: aiModel,
                 recordCount: records.length
             };
         });
@@ -354,18 +357,20 @@ describe('E2E Test: sbpr App', () => {
         expect(exportData.profile.gender).toBe('male');
         expect(exportData.profile.height).toBe('170');
         expect(exportData.aiMemo).toBe('降圧剤を服用中');
+        expect(exportData.aiModel).toBe('gpt-4.1');
 
         await page.evaluate(() => {
             localStorage.removeItem('sbpr_birthday');
             localStorage.removeItem('sbpr_gender');
             localStorage.removeItem('sbpr_height');
             localStorage.removeItem('sbpr_ai_memo');
+            localStorage.removeItem('sbpr_ai_model');
         });
 
         expect(pageErrors.length).toBe(0);
     }, 60000);
 
-    test('E2E-016: インポートでプロフィールとAI備考が復元される', async () => {
+    test('E2E-016: インポートでプロフィールとAI備考とAIモデルが復元される', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
 
         await page.evaluate(() => {
@@ -373,6 +378,7 @@ describe('E2E Test: sbpr App', () => {
             localStorage.removeItem('sbpr_gender');
             localStorage.removeItem('sbpr_height');
             localStorage.removeItem('sbpr_ai_memo');
+            localStorage.removeItem('sbpr_ai_model');
         });
 
         const importJson = JSON.stringify({
@@ -386,7 +392,8 @@ describe('E2E Test: sbpr App', () => {
                 gender: 'female',
                 height: '160'
             },
-            aiMemo: '高血圧の家族歴あり'
+            aiMemo: '高血圧の家族歴あり',
+            aiModel: 'gpt-4.1'
         });
 
         await page.evaluate((json) => {
@@ -410,10 +417,12 @@ describe('E2E Test: sbpr App', () => {
                 gender: localStorage.getItem('sbpr_gender'),
                 height: localStorage.getItem('sbpr_height'),
                 aiMemo: localStorage.getItem('sbpr_ai_memo'),
+                aiModel: localStorage.getItem('sbpr_ai_model'),
                 birthdayUI: document.getElementById('input-birthday').value,
                 genderUI: document.getElementById('input-gender').value,
                 heightUI: document.getElementById('input-height').value,
-                aiMemoUI: document.getElementById('input-ai-memo').value
+                aiMemoUI: document.getElementById('input-ai-memo').value,
+                aiModelUI: document.getElementById('ai-model-select').value
             };
         });
 
@@ -421,16 +430,19 @@ describe('E2E Test: sbpr App', () => {
         expect(restored.gender).toBe('female');
         expect(restored.height).toBe('160');
         expect(restored.aiMemo).toBe('高血圧の家族歴あり');
+        expect(restored.aiModel).toBe('gpt-4.1');
         expect(restored.birthdayUI).toBe('1990-12-25');
         expect(restored.genderUI).toBe('female');
         expect(restored.heightUI).toBe('160');
         expect(restored.aiMemoUI).toBe('高血圧の家族歴あり');
+        expect(restored.aiModelUI).toBe('gpt-4.1');
 
         await page.evaluate(() => {
             localStorage.removeItem('sbpr_birthday');
             localStorage.removeItem('sbpr_gender');
             localStorage.removeItem('sbpr_height');
             localStorage.removeItem('sbpr_ai_memo');
+            localStorage.removeItem('sbpr_ai_model');
         });
 
         expect(pageErrors.length).toBe(0);
@@ -491,6 +503,84 @@ describe('E2E Test: sbpr App', () => {
 
         await page.evaluate(() => {
             localStorage.removeItem('sbpr_openai_api_key');
+        });
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-017: AIモデル選択セレクトが設定タブに表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        const selectExists = await page.evaluate(() => {
+            const el = document.getElementById('ai-model-select');
+            return el !== null && el.tagName === 'SELECT';
+        });
+        expect(selectExists).toBe(true);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-018: AIモデル選択のデフォルト値がgpt-4o-miniである', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.evaluate(() => {
+            localStorage.removeItem('sbpr_ai_model');
+        });
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        const defaultModel = await page.evaluate(() => {
+            return document.getElementById('ai-model-select').value;
+        });
+        expect(defaultModel).toBe('gpt-4o-mini');
+
+        const modelFromFunc = await page.evaluate(() => {
+            return getSelectedAiModel();
+        });
+        expect(modelFromFunc).toBe('gpt-4o-mini');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-019: AIモデル選択の変更がlocalStorageに保存される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        await page.select('#ai-model-select', 'gpt-4.1');
+
+        const savedModel = await page.evaluate(() => {
+            return localStorage.getItem('sbpr_ai_model');
+        });
+        expect(savedModel).toBe('gpt-4.1');
+
+        await page.evaluate(() => {
+            localStorage.removeItem('sbpr_ai_model');
+        });
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-020: AIモデル情報が正しく表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        await page.select('#ai-model-select', 'gpt-4.1');
+
+        const infoText = await page.evaluate(() => {
+            return document.getElementById('ai-model-info').textContent;
+        });
+        expect(infoText).toContain('GPT-4.1');
+        expect(infoText).toContain('gpt-4.1');
+        expect(infoText).toContain('1,047,576');
+
+        await page.evaluate(() => {
+            localStorage.removeItem('sbpr_ai_model');
         });
 
         expect(pageErrors.length).toBe(0);

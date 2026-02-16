@@ -257,6 +257,23 @@
             </div>
 
             <div class="setting-item">
+                <h3>利用モデル</h3>
+                <p>AIモデルにより、価格・応答品質・最大コンテキスト（入力上限トークン）が変わります。選択は自動的に保存されます。</p>
+                <div class="form-group">
+                    <select id="ai-model-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 0.95em;">
+                        <option value="gpt-4o-mini">GPT-4o mini（低コスト / デフォルト）</option>
+                        <option value="gpt-4.1-mini">GPT-4.1 mini</option>
+                        <option value="gpt-4.1">GPT-4.1（1Mコンテキスト）</option>
+                        <option value="gpt-4o">GPT-4o</option>
+                        <option value="gpt-5-mini">GPT-5 mini（高速）</option>
+                        <option value="gpt-5">GPT-5</option>
+                        <option value="gpt-5.2">GPT-5.2（最新）</option>
+                    </select>
+                    <div id="ai-model-info" style="margin-top: 6px; font-size: 0.85em; color: #666;"></div>
+                </div>
+            </div>
+
+            <div class="setting-item">
                 <h3>AIに伝えたい備考</h3>
                 <p>通院情報、服薬状況、持病など、AI診断の際に参考にしてほしい情報を記入してください。</p>
                 <div class="form-group">

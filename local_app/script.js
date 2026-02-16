@@ -783,6 +783,7 @@ async function exportData() {
         const records = await getAllRecords();
         const profile = getProfile();
         const aiMemo = getAIMemo();
+        const aiModel = getSelectedAiModel();
         const data = {
             version: (window.APP_INFO || {}).version || '0.1.0',
             appName: 'sbpr',
@@ -790,7 +791,8 @@ async function exportData() {
             recordCount: records.length,
             records: records,
             profile: profile,
-            aiMemo: aiMemo
+            aiMemo: aiMemo,
+            aiModel: aiModel
         };
 
         const json = JSON.stringify(data, null, 2);
@@ -873,9 +875,16 @@ async function importData(event) {
             if (aiMemoInput) aiMemoInput.value = data.aiMemo;
         }
 
+        if (data.aiModel != null && AI_MODEL_CATALOG[data.aiModel]) {
+            setSelectedAiModel(data.aiModel);
+            const aiModelSelect = document.getElementById('ai-model-select');
+            if (aiModelSelect) aiModelSelect.value = data.aiModel;
+        }
+
         const parts = [`${importedCount}件のデータをインポートしました（重複${data.records.length - importedCount}件スキップ）`];
         if (data.profile) parts.push('プロフィールを復元しました');
         if (data.aiMemo != null) parts.push('AI備考を復元しました');
+        if (data.aiModel != null) parts.push('AIモデル設定を復元しました');
         showMessage('settings-message', parts.join('。'), 'success');
         await refreshAll();
     } catch (error) {
@@ -904,9 +913,42 @@ function confirmDeleteAll() {
 
 const LS_KEY_API_KEY = 'sbpr_openai_api_key';
 const LS_KEY_AI_MEMO = 'sbpr_ai_memo';
+const LS_KEY_AI_MODEL = 'sbpr_ai_model';
 const LS_KEY_BIRTHDAY = 'sbpr_birthday';
 const LS_KEY_GENDER = 'sbpr_gender';
 const LS_KEY_HEIGHT = 'sbpr_height';
+
+const DEFAULT_AI_MODEL = 'gpt-4o-mini';
+const AI_MODEL_CATALOG = {
+    'gpt-4o-mini': { label: 'GPT-4o mini（低コスト）', contextWindow: 128000, inputPrice: 0.15, outputPrice: 0.60 },
+    'gpt-4.1-mini': { label: 'GPT-4.1 mini', contextWindow: 1047576, inputPrice: 0.40, outputPrice: 1.60 },
+    'gpt-4.1': { label: 'GPT-4.1（1Mコンテキスト）', contextWindow: 1047576, inputPrice: 2.00, outputPrice: 8.00 },
+    'gpt-4o': { label: 'GPT-4o', contextWindow: 128000, inputPrice: 2.50, outputPrice: 10.00 },
+    'gpt-5-mini': { label: 'GPT-5 mini（高速）', contextWindow: 400000, inputPrice: 1.10, outputPrice: 4.40 },
+    'gpt-5': { label: 'GPT-5', contextWindow: 400000, inputPrice: 2.00, outputPrice: 8.00 },
+    'gpt-5.2': { label: 'GPT-5.2（最新）', contextWindow: 400000, inputPrice: 2.00, outputPrice: 8.00 }
+};
+
+function getSelectedAiModel() {
+    try {
+        const raw = localStorage.getItem(LS_KEY_AI_MODEL);
+        const v = raw ? String(raw).trim() : '';
+        return AI_MODEL_CATALOG[v] ? v : DEFAULT_AI_MODEL;
+    } catch (e) {
+        return DEFAULT_AI_MODEL;
+    }
+}
+
+function setSelectedAiModel(modelId) {
+    const m = (modelId && AI_MODEL_CATALOG[modelId]) ? modelId : DEFAULT_AI_MODEL;
+    try { localStorage.setItem(LS_KEY_AI_MODEL, m); } catch (e) {}
+    return m;
+}
+
+function getSelectedAiModelContextWindow() {
+    const m = getSelectedAiModel();
+    return AI_MODEL_CATALOG[m]?.contextWindow || 128000;
+}
 
 function initProfile() {
     const birthdayInput = document.getElementById('input-birthday');
@@ -1003,6 +1045,26 @@ function initAISettings() {
         localStorage.setItem(LS_KEY_AI_MEMO, memo);
         showMessage('ai-settings-message', '備考を保存しました', 'success');
     });
+
+    const aiModelSelect = document.getElementById('ai-model-select');
+    const aiModelInfo = document.getElementById('ai-model-info');
+    if (aiModelSelect) {
+        const currentModel = getSelectedAiModel();
+        aiModelSelect.value = currentModel;
+        const updateModelInfo = () => {
+            const m = getSelectedAiModel();
+            const meta = AI_MODEL_CATALOG[m];
+            if (aiModelInfo && meta) {
+                const ctx = meta.contextWindow.toLocaleString();
+                aiModelInfo.textContent = `現在: ${meta.label}（model id: ${m}）/ コンテキスト上限: ${ctx} tokens / 入力: $${meta.inputPrice}/1M / 出力: $${meta.outputPrice}/1M`;
+            }
+        };
+        updateModelInfo();
+        aiModelSelect.addEventListener('change', () => {
+            setSelectedAiModel(aiModelSelect.value);
+            updateModelInfo();
+        });
+    }
 }
 
 function getApiKey() {
@@ -1281,7 +1343,7 @@ async function callOpenAI(apiKey, messages) {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: getSelectedAiModel(),
                 messages: messages,
                 stream: true,
                 temperature: 0.7,
