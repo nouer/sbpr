@@ -125,12 +125,14 @@ WHO/ISH基準に基づく血圧分類:
 | 環境 | クライアント → | → upstream |
 |------|---------------|------------|
 | ローカル (nginx) | `/openai/*` | `api.openai.com/*` |
-| Vercel (rewrite) | `/openai/:path*` → `/api/openai?path=:path*` | `api.openai.com/:path*` |
+| Vercel (rewrite + catch-all) | `/openai/:path*` → `/api/openai/:path*` | `api.openai.com/:path*` |
 
-#### プロキシ実装 (`api/openai.js` / `local_app/api/openai.js`)
-* 2ファイルは同一内容（Vercelの Root Directory 設定差異を吸収するための二重配置）
+#### プロキシ実装
+* **Vercel**: `api/openai/[...path].js`（catch-all API route）
+  * Vercelのrewrite `/openai/:path*` → `/api/openai/:path*` で受け、パスセグメントを `req.query.path`（配列）から取得
+* **ローカル参照**: `local_app/api/openai.js`（nginx環境では未使用。nginxが直接OpenAIへプロキシ）
 * **OPTIONS preflight**: 204を返却（同一オリジンなら通常不要だが環境差を吸収）
-* **バリデーション**: `path` クエリパラメータと `Authorization` ヘッダの欠落時は 400 を返却
+* **バリデーション**: パスセグメントと `Authorization` ヘッダの欠落時は 400 を返却
 * **リクエスト転送**: `req`（IncomingMessage）をそのまま `body` に渡し、`duplex: 'half'` で
   ストリームとして転送（`JSON.stringify` による再シリアライズは行わない）
 * **ヘッダ転送**: クライアントの `authorization`, `content-type`, `accept` のみ上流へ転送

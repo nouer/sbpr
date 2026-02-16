@@ -1,6 +1,5 @@
 node_modules/
 coverage/
-local_app/version.js
 *.log
 .DS_Store
 .env
