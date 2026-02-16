@@ -1366,11 +1366,11 @@ async function callOpenAI(apiKey, messages) {
             body: JSON.stringify(buildChatRequestBody(messages))
         };
 
-        // まず /openai/* を試行（vercel.json rewrite経由）
-        // 404の場合は /api/openai?path=* を直接試行（フォールバック）
-        let response = await fetch(`/openai/${openAiPath}`, requestInit);
+        // まず /api/openai?path=* を直接試行（Serverless Function直呼び出し）
+        // 404の場合は /openai/* を試行（vercel.json rewrite経由 / nginx proxy経由）
+        let response = await fetch(`/api/openai?path=${encodeURIComponent(openAiPath)}`, requestInit);
         if (response.status === 404) {
-            response = await fetch(`/api/openai?path=${encodeURIComponent(openAiPath)}`, requestInit);
+            response = await fetch(`/openai/${openAiPath}`, requestInit);
         }
 
         if (!response.ok) {
