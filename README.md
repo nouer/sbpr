@@ -13,7 +13,9 @@
 - **基準線表示**: 最高血圧 135mmHg / 最低血圧 85mmHg の基準ライン
 - **記録管理**: 一覧表示、編集、削除、日付フィルタ
 - **エクスポート/インポート**: JSON形式でデータのバックアップ・復元
-- **オフライン動作**: ブラウザ IndexedDB にデータ保存（サーバー不要）
+- **PDFレポート共有**: 統計・グラフ・記録一覧をPDFとして共有・ダウンロード
+- **PWA対応**: ホーム画面インストール、完全オフライン動作、バッジ表示
+- **オフライン動作**: Service Worker + IndexedDB による完全オフライン対応
 - **レスポンシブ対応**: PC・タブレット・スマートフォン対応
 
 ## 技術スタック
@@ -24,6 +26,8 @@
 | スタイル | CSS（ビルドツール不使用） |
 | データストア | IndexedDB |
 | グラフ描画 | [Chart.js](https://www.chartjs.org/) v4 |
+| PDF生成 | [html2pdf.js](https://github.com/eKoopmans/html2pdf.js) v0.10 |
+| PWA | Web App Manifest + Service Worker |
 | テスト | Jest + Puppeteer |
 | コンテナ | Docker (nginx:alpine / node:alpine) |
 | デプロイ | Vercel |
@@ -35,11 +39,17 @@ sbpr/
 ├── local_app/              # アプリ本体（HTML + vanilla JS）
 │   ├── index.html          # SPA エントリポイント
 │   ├── style.css           # スタイルシート
-│   ├── script.js           # メインロジック（IndexedDB・UI・グラフ）
+│   ├── script.js           # メインロジック（IndexedDB・UI・グラフ・PWA）
 │   ├── bp.calc.js          # 計算ロジック（純粋関数）
 │   ├── bp.calc.test.js     # 単体テスト
 │   ├── e2e.test.js         # E2Eテスト（Puppeteer）
-│   └── version.js          # ビルド時自動生成
+│   ├── version.js          # ビルド時自動生成
+│   ├── manifest.json       # PWA Web App Manifest
+│   ├── sw.js               # PWA Service Worker
+│   └── icons/              # PWA アイコン
+│       ├── icon-192.svg    # 192x192 アイコン
+│       ├── icon-512.svg    # 512x512 アイコン
+│       └── icon-maskable.svg # マスカブルアイコン
 ├── api/                    # Vercel Serverless Functions
 │   ├── openai.js           # OpenAI reverse proxy (query param方式)
 │   └── openai/[...path].js # OpenAI reverse proxy (catch-all, fallback)
@@ -101,6 +111,32 @@ docker compose run --rm sbpr-test npm test
 | `sbpr-app` | テスト/E2E用（内部ネットワークのみ） | 非公開 |
 | `sbpr-app-public` | ブラウザ確認用 | 8082 (変更可) |
 | `sbpr-test` | テスト実行（Node.js + Chromium） | — |
+
+## PWA（Progressive Web App）
+
+本アプリはPWA対応しており、スマートフォンにネイティブアプリのようにインストールできます。
+
+### インストール方法
+
+**Android (Chrome)**:
+1. ブラウザでアプリを開く
+2. メニュー（⋮）→「ホーム画面に追加」をタップ
+3. ホーム画面のアイコンからフルスクリーンで起動
+
+**iOS (Safari)**:
+1. Safari でアプリを開く
+2. 共有ボタン（□↑）→「ホーム画面に追加」をタップ
+3. ホーム画面のアイコンからフルスクリーンで起動
+
+### PWA機能一覧
+
+| 機能 | 説明 |
+|------|------|
+| ホーム画面インストール | ネイティブアプリのようにアイコンから起動 |
+| 完全オフライン動作 | Service Worker によりネットワーク不要で動作 |
+| テーマカラー / スプラッシュ | 起動時にブランドカラーのスプラッシュ表示 |
+| バッジ表示 | 当日未記録時にアイコンにバッジ表示（Chrome/Edge） |
+| PDFレポート共有 | 統計・グラフ・記録一覧をPDFとして共有/ダウンロード |
 
 ## ライセンス
 

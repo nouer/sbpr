@@ -73,3 +73,33 @@ sbpr/
 ## 4. 外部ライブラリ
 * **Chart.js** (v4.x): グラフ描画 (CDN経由)
 * **Chart.js date-fns adapter**: 日付軸対応
+
+## 5. PWA構成
+
+### 5.1 ファイル構成
+* `manifest.json` - Web App Manifest（アプリ名、テーマカラー、アイコン定義）
+* `sw.js` - Service Worker（アセットキャッシュ、オフライン対応）
+* `icons/icon-192.svg` - アプリアイコン 192x192
+* `icons/icon-512.svg` - アプリアイコン 512x512
+* `icons/icon-maskable.svg` - マスカブルアイコン（セーフゾーン考慮）
+
+### 5.2 Service Worker キャッシュ戦略
+* **戦略**: Cache First + Network Fallback
+* **プリキャッシュ対象**: index.html, style.css, script.js, bp.calc.js, version.js, manifest.json, アイコン, Chart.js CDN, html2pdf.js CDN
+* **除外**: OpenAI API リクエスト（/openai/）
+* **更新**: `CACHE_NAME` のバージョンを変更することでキャッシュを刷新
+
+### 5.3 Badge API
+* アプリ起動時、記録保存時、記録削除時にバッジ状態を更新
+* 当日（ローカル日付）の記録が0件の場合、バッジに「1」を表示
+* 記録が存在する場合、バッジをクリア
+* Badge API非対応ブラウザでは何もしない
+
+### 5.4 PDFレポート生成
+* **ライブラリ**: html2pdf.js (CDN)
+* **フロー**: 非表示HTML要素を動的構築 → Chart.jsのcanvasをtoDataURL()で画像化 → html2pdf.jsでPDF Blob生成 → Web Share API or ダウンロード
+
+## 6. 外部ライブラリ（更新）
+* **Chart.js** (v4.x): グラフ描画 (CDN経由)
+* **Chart.js date-fns adapter**: 日付軸対応
+* **html2pdf.js** (v0.10.x): PDF生成 (CDN経由) - html2canvas + jsPDF のラッパー

@@ -793,4 +793,88 @@ describe('E2E Test: sbpr App', () => {
 
         expect(pageErrors.length).toBe(0);
     }, 60000);
+
+    // ===== PWA機能テスト =====
+
+    test('E2E-PWA-001: manifest.jsonが正しく読み込まれる', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        const manifestHref = await page.evaluate(() => {
+            const link = document.querySelector('link[rel="manifest"]');
+            return link ? link.getAttribute('href') : null;
+        });
+        expect(manifestHref).toBe('/manifest.json');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-PWA-002: Service Workerが登録される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        const swRegistered = await page.evaluate(async () => {
+            if (!('serviceWorker' in navigator)) return 'not-supported';
+            try {
+                const registration = await navigator.serviceWorker.getRegistration('/');
+                return registration ? 'registered' : 'not-registered';
+            } catch (e) {
+                return 'error: ' + e.message;
+            }
+        });
+
+        expect(['registered', 'not-supported']).toContain(swRegistered);
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-PWA-003: PWA meta tagsが設定されている', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        const metaTags = await page.evaluate(() => {
+            const themeColor = document.querySelector('meta[name="theme-color"]');
+            const webAppCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
+            const webAppTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+            const touchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+            return {
+                themeColor: themeColor ? themeColor.getAttribute('content') : null,
+                webAppCapable: webAppCapable ? webAppCapable.getAttribute('content') : null,
+                webAppTitle: webAppTitle ? webAppTitle.getAttribute('content') : null,
+                touchIcon: touchIcon ? touchIcon.getAttribute('href') : null
+            };
+        });
+
+        expect(metaTags.themeColor).toBe('#2563eb');
+        expect(metaTags.webAppCapable).toBe('yes');
+        expect(metaTags.webAppTitle).toBe('血圧記録');
+        expect(metaTags.touchIcon).toBe('/icons/icon-192.svg');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-PWA-004: PDFレポート共有ボタンが表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        const shareBtnVisible = await isVisible('#share-pdf-btn');
+        expect(shareBtnVisible).toBe(true);
+
+        const shareBtnText = await page.$eval('#share-pdf-btn', el => el.textContent);
+        expect(shareBtnText).toContain('PDFレポート');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-PWA-005: pageerrorが発生しない（PWA込み全タブ巡回）', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        const tabs = ['record', 'chart', 'history', 'settings'];
+        for (const tab of tabs) {
+            await page.click(`[data-tab="${tab}"]`);
+            await new Promise(r => setTimeout(r, 500));
+        }
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
 });

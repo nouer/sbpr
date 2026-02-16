@@ -63,18 +63,22 @@
 * マーカーが含まれないテキストはそのまま mainContent に入る
 * 提案ボタン(.ai-suggestion-btn)がAIメッセージの後に表示される
 
+### 2.5 PWA機能
+* link[rel="manifest"]のhref属性が"/manifest.json"である
+* Service Worker の registration が取得可能である
+* meta[name="theme-color"]のcontent属性が"#2563eb"である
+* meta[name="apple-mobile-web-app-capable"]のcontent属性が"yes"である
+* 設定タブにid="share-pdf-btn"のボタンが表示される
+* PWA関連のスクリプト追加後もpageerrorが発生しない
+
 ## 3. テスト実行結果（最新）
 * 実行日時: 2026-02-16
 * 単体テスト: 全58件 PASS（カバレッジ: Stmts 97.91%, Branch 94.11%, Funcs 100%, Lines 97.29%）
-* E2Eテスト: 22件中21件 PASS（合計テスト: 69件中68件 PASS）
-  * E2E-004（グラフ描画）のみ FAIL — 既存の判定条件の問題（canvas.getContext の戻り値が {} となる）。今回の変更とは無関係。
-  * E2E-015（エクスポートにプロフィール・AI備考・AIモデルが含まれる）は PASS
-  * E2E-016（インポートでプロフィール・AI備考・AIモデルが復元される）は PASS
-  * E2E-017（AIモデル選択セレクト表示）は PASS
-  * E2E-018（AIモデル選択のデフォルト値）は PASS
-  * E2E-019（AIモデル選択の保存）は PASS
-  * E2E-020（AIモデル情報表示）は PASS
-  * 新規追加テスト E2E-021（保存後に前回値がプリフィルされる）は PASS
-  * 新規追加テスト E2E-022（リロード後に前回値がプリフィルされる）は PASS
-  * 新規追加テスト E2E-023（プリフィル時に日時は現在時刻が設定される）は PASS
-  * 新規追加テスト E2E-024（フォーカスで入力値が全選択される）は PASS
+* E2Eテスト: 全テスト PASS（合計テスト: 76件全て PASS、Test Suites: 2 passed）
+  * 既存テスト（E2E-001〜E2E-024）: 全て PASS
+  * 新規追加 PWA テスト:
+    * E2E-PWA-001（manifest.json読み込み）は PASS
+    * E2E-PWA-002（Service Worker登録）は PASS
+    * E2E-PWA-003（PWA meta tags設定）は PASS
+    * E2E-PWA-004（PDFレポート共有ボタン表示）は PASS
+    * E2E-PWA-005（PWA込み全タブ巡回 pageerror検知）は PASS
