@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプル血圧記録 - sbpr</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="app-header">
+        <h1>シンプル血圧記録</h1>
+        <span class="version-info" id="version-info"></span>
+    </header>
+
+    <!-- タブナビゲーション -->
+    <nav class="tab-nav" id="tab-nav">
+        <button class="active" data-tab="record">記録</button>
+        <button data-tab="chart">グラフ</button>
+        <button data-tab="history">履歴</button>
+        <button data-tab="settings">設定</button>
+    </nav>
+
+    <!-- 記録タブ -->
+    <div id="tab-record" class="tab-content active">
+        <div class="card">
+            <div class="card-title">血圧を記録する</div>
+
+            <div id="record-message" class="message"></div>
+
+            <form id="bp-form" autocomplete="off">
+                <div class="form-group">
+                    <label for="input-datetime">測定日時</label>
+                    <input type="datetime-local" id="input-datetime">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-systolic">最高血圧</label>
+                        <div class="input-unit">
+                            <input type="number" id="input-systolic" placeholder="120" min="50" max="300" required>
+                            <span class="unit">mmHg</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-diastolic">最低血圧</label>
+                        <div class="input-unit">
+                            <input type="number" id="input-diastolic" placeholder="80" min="30" max="200" required>
+                            <span class="unit">mmHg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-pulse">脈拍数</label>
+                        <div class="input-unit">
+                            <input type="number" id="input-pulse" placeholder="72" min="30" max="250">
+                            <span class="unit">bpm</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <!-- 空きスペース -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-memo">メモ</label>
+                    <textarea id="input-memo" rows="2" placeholder="服薬状況、体調など"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="save-btn">記録を保存</button>
+            </form>
+        </div>
+
+        <!-- 直近の記録 -->
+        <div class="card">
+            <div class="card-title">直近の記録</div>
+            <div id="recent-records">
+                <div class="empty-state">
+                    <div class="icon">📋</div>
+                    <p>まだ記録がありません</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- グラフタブ -->
+    <div id="tab-chart" class="tab-content">
+        <div class="card">
+            <div class="card-title">血圧推移グラフ</div>
+            <div class="chart-controls" id="chart-period-controls">
+                <button data-period="7" class="active">7日</button>
+                <button data-period="30">30日</button>
+                <button data-period="90">90日</button>
+                <button data-period="all">全期間</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="bp-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- 統計情報 -->
+        <div class="card">
+            <div class="card-title">統計情報</div>
+            <div id="stats-area">
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">平均 最高血圧</div>
+                        <div class="stat-value" id="stat-avg-sys">---</div>
+                        <div class="stat-unit">mmHg</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">平均 最低血圧</div>
+                        <div class="stat-value" id="stat-avg-dia">---</div>
+                        <div class="stat-unit">mmHg</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">平均 脈拍</div>
+                        <div class="stat-value" id="stat-avg-pulse">---</div>
+                        <div class="stat-unit">bpm</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">記録数</div>
+                        <div class="stat-value" id="stat-count">0</div>
+                        <div class="stat-unit">件</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 履歴タブ -->
+    <div id="tab-history" class="tab-content">
+        <div class="card">
+            <div class="card-title">記録履歴</div>
+            <div class="filter-row">
+                <input type="date" id="filter-from" title="開始日">
+                <span>〜</span>
+                <input type="date" id="filter-to" title="終了日">
+                <button class="btn btn-sm btn-secondary" id="filter-clear-btn">クリア</button>
+            </div>
+            <div id="history-records">
+                <div class="empty-state">
+                    <div class="icon">📋</div>
+                    <p>まだ記録がありません</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定タブ -->
+    <div id="tab-settings" class="tab-content">
+        <div class="card">
+            <div class="card-title">データ管理</div>
+
+            <div id="settings-message" class="message"></div>
+
+            <div class="setting-item">
+                <h3>データエクスポート</h3>
+                <p>全ての記録データをJSON形式でダウンロードします。</p>
+                <button class="btn btn-primary" id="export-btn">エクスポート</button>
+            </div>
+
+            <div class="setting-item">
+                <h3>データインポート</h3>
+                <p>エクスポートしたJSONファイルからデータを復元します。既存データとマージされます。</p>
+                <button class="btn btn-secondary" id="import-btn">インポート</button>
+                <input type="file" id="import-file" accept="application/json" style="display:none;">
+            </div>
+
+            <div class="setting-item">
+                <h3>全データ削除</h3>
+                <p>全ての記録データを削除します。この操作は取り消せません。</p>
+                <button class="btn btn-danger" id="delete-all-btn">全データ削除</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">アプリ情報</div>
+            <div class="setting-item">
+                <p>アプリ名: シンプル血圧記録 (sbpr)</p>
+                <p id="app-version-info">バージョン: ---</p>
+                <p id="app-build-info">ビルド日時: ---</p>
+                <p>データ保存先: ブラウザ IndexedDB</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 確認ダイアログ -->
+    <div id="confirm-overlay" class="confirm-overlay">
+        <div class="confirm-dialog">
+            <h3 id="confirm-title">確認</h3>
+            <p id="confirm-message">この操作を実行しますか？</p>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="confirm-cancel">キャンセル</button>
+                <button class="btn btn-danger" id="confirm-ok">実行</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編集ダイアログ -->
+    <div id="edit-overlay" class="confirm-overlay">
+        <div class="confirm-dialog" style="max-width: 500px;">
+            <h3>記録を編集</h3>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label for="edit-datetime">測定日時</label>
+                    <input type="datetime-local" id="edit-datetime">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-systolic">最高血圧 (mmHg)</label>
+                        <input type="number" id="edit-systolic" min="50" max="300" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-diastolic">最低血圧 (mmHg)</label>
+                        <input type="number" id="edit-diastolic" min="30" max="200" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-pulse">脈拍数 (bpm)</label>
+                    <input type="number" id="edit-pulse" min="30" max="250">
+                </div>
+                <div class="form-group">
+                    <label for="edit-memo">メモ</label>
+                    <textarea id="edit-memo" rows="2"></textarea>
+                </div>
+                <div class="btn-group" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" id="edit-cancel">キャンセル</button>
+                    <button type="submit" class="btn btn-primary" id="edit-save">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="version.js"></script>
+    <script src="bp.calc.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
