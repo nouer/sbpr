@@ -1671,6 +1671,8 @@ const UPDATE_CHECK_THROTTLE_MS = 30000;
 async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
 
+    const hadController = !!navigator.serviceWorker.controller;
+
     try {
         swRegistration = await navigator.serviceWorker.register('/sw.js');
 
@@ -1678,7 +1680,7 @@ async function registerServiceWorker() {
             const newWorker = swRegistration.installing;
             if (newWorker) {
                 newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                    if (newWorker.state === 'activated' && hadController) {
                         showUpdateBanner();
                     }
                 });
@@ -1686,7 +1688,9 @@ async function registerServiceWorker() {
         });
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            showUpdateBanner();
+            if (hadController) {
+                showUpdateBanner();
+            }
         });
 
         document.addEventListener('visibilitychange', () => {
