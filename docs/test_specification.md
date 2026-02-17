@@ -87,5 +87,4 @@
 | E2E-PWA-001 | manifest.jsonが読み込まれる | トップページにアクセス | link[rel=manifest]が存在し、href="/manifest.json"である |
 | E2E-PWA-002 | Service Workerが登録される | トップページにアクセス後、SW登録を確認 | navigator.serviceWorker.controllerまたはregistration が存在する |
 | E2E-PWA-003 | PWA meta tagsが設定されている | トップページにアクセス | theme-color, apple-mobile-web-app-capable等のmetaタグが存在する |
-| E2E-PWA-004 | PDFレポート共有ボタンが表示される | 設定タブに移動 | #share-pdf-btn が表示される |
-| E2E-PWA-005 | pageerrorが発生しない（PWA込み全タブ巡回） | 全タブを巡回 | JSエラーが発生しないこと |
+| E2E-PWA-004 | pageerrorが発生しない（PWA込み全タブ巡回） | 全タブを巡回 | JSエラーが発生しないこと |

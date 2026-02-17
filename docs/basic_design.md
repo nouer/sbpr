@@ -95,11 +95,6 @@ sbpr/
 * 記録が存在する場合、バッジをクリア
 * Badge API非対応ブラウザでは何もしない
 
-### 5.4 PDFレポート生成
-* **ライブラリ**: html2pdf.js (CDN)
-* **フロー**: 非表示HTML要素を動的構築 → Chart.jsのcanvasをtoDataURL()で画像化 → html2pdf.jsでPDF Blob生成 → Web Share API or ダウンロード
-
 ## 6. 外部ライブラリ（更新）
 * **Chart.js** (v4.x): グラフ描画 (CDN経由)
 * **Chart.js date-fns adapter**: 日付軸対応
-* **html2pdf.js** (v0.10.x): PDF生成 (CDN経由) - html2canvas + jsPDF のラッパー

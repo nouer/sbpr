@@ -228,7 +228,6 @@ async function initApp() {
     initEditDialog();
     initProfile();
     initAISettings();
-    initPdfShare();
     await initAIDiagnosis();
     updateAITabVisibility();
     setDefaultDateTime();
@@ -852,16 +851,6 @@ function initSettingsControls() {
     document.getElementById('import-file').addEventListener('change', importData);
     document.getElementById('delete-all-btn').addEventListener('click', confirmDeleteAll);
     document.getElementById('confirm-cancel').addEventListener('click', closeConfirmDialog);
-}
-
-/**
- * PDFレポート共有ボタンの初期化
- */
-function initPdfShare() {
-    const btn = document.getElementById('share-pdf-btn');
-    if (btn) {
-        btn.addEventListener('click', generateAndSharePDF);
-    }
 }
 
 /**
@@ -1705,182 +1694,6 @@ async function updateAppBadge() {
         }
     } catch (e) {
         // バッジ更新失敗は無視
-    }
-}
-
-// ===== PWA: PDFレポート生成・共有 =====
-
-/**
- * PDFレポート用のHTML要素を構築
- * @param {Array} records - 表示対象の記録
- * @param {object} avg - calcAverage() の結果
- * @param {string|null} chartImageDataUrl - Chart.jsグラフの画像データURL
- * @returns {HTMLElement}
- */
-function buildPdfReportElement(records, avg, chartImageDataUrl) {
-    const container = document.getElementById('pdf-report-container');
-    const now = new Date();
-    const dateStr = formatDateTime(now.toISOString());
-    const periodLabel = currentPeriod === 'all' ? '全期間' : `直近${currentPeriod}日`;
-
-    let html = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif; padding: 24px; color: #1f2937;">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="font-size: 20px; color: #2563eb; margin: 0;">シンプル血圧記録 - レポート</h1>
-                <p style="font-size: 12px; color: #6b7280; margin: 4px 0;">生成日時: ${dateStr} ／ 期間: ${periodLabel}</p>
-            </div>
-
-            <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 120px; background: #f9fafb; border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: #6b7280;">平均 最高血圧</div>
-                    <div style="font-size: 22px; font-weight: 700; color: #dc2626;">${avg ? avg.avgSystolic : '---'}</div>
-                    <div style="font-size: 10px; color: #9ca3af;">mmHg</div>
-                </div>
-                <div style="flex: 1; min-width: 120px; background: #f9fafb; border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: #6b7280;">平均 最低血圧</div>
-                    <div style="font-size: 22px; font-weight: 700; color: #2563eb;">${avg ? avg.avgDiastolic : '---'}</div>
-                    <div style="font-size: 10px; color: #9ca3af;">mmHg</div>
-                </div>
-                <div style="flex: 1; min-width: 120px; background: #f9fafb; border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: #6b7280;">平均 脈拍</div>
-                    <div style="font-size: 22px; font-weight: 700; color: #16a34a;">${avg && avg.avgPulse != null ? avg.avgPulse : '---'}</div>
-                    <div style="font-size: 10px; color: #9ca3af;">bpm</div>
-                </div>
-                <div style="flex: 1; min-width: 120px; background: #f9fafb; border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: #6b7280;">記録数</div>
-                    <div style="font-size: 22px; font-weight: 700; color: #1f2937;">${records.length}</div>
-                    <div style="font-size: 10px; color: #9ca3af;">件</div>
-                </div>
-            </div>`;
-
-    if (chartImageDataUrl) {
-        html += `
-            <div style="margin-bottom: 20px;">
-                <h2 style="font-size: 14px; color: #374151; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">血圧推移グラフ</h2>
-                <img src="${chartImageDataUrl}" style="width: 100%; height: auto; border-radius: 6px;" />
-            </div>`;
-    }
-
-    html += `
-            <div>
-                <h2 style="font-size: 14px; color: #374151; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">記録一覧</h2>
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                    <thead>
-                        <tr style="background: #f3f4f6;">
-                            <th style="padding: 6px 8px; text-align: left; border-bottom: 2px solid #d1d5db;">日時</th>
-                            <th style="padding: 6px 8px; text-align: center; border-bottom: 2px solid #d1d5db;">最高</th>
-                            <th style="padding: 6px 8px; text-align: center; border-bottom: 2px solid #d1d5db;">最低</th>
-                            <th style="padding: 6px 8px; text-align: center; border-bottom: 2px solid #d1d5db;">脈拍</th>
-                            <th style="padding: 6px 8px; text-align: left; border-bottom: 2px solid #d1d5db;">分類</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
-    const displayRecords = records.slice(0, 50);
-    for (const r of displayRecords) {
-        const cls = classifyBP(r.systolic, r.diastolic);
-        html += `
-                        <tr>
-                            <td style="padding: 5px 8px; border-bottom: 1px solid #e5e7eb;">${formatDateTime(r.measuredAt)}</td>
-                            <td style="padding: 5px 8px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #dc2626; font-weight: 600;">${r.systolic}</td>
-                            <td style="padding: 5px 8px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #2563eb; font-weight: 600;">${r.diastolic}</td>
-                            <td style="padding: 5px 8px; text-align: center; border-bottom: 1px solid #e5e7eb;">${r.pulse != null ? r.pulse : '-'}</td>
-                            <td style="padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 10px;">${cls}</td>
-                        </tr>`;
-    }
-
-    if (records.length > 50) {
-        html += `
-                        <tr>
-                            <td colspan="5" style="padding: 8px; text-align: center; color: #9ca3af; font-size: 10px;">他 ${records.length - 50} 件省略</td>
-                        </tr>`;
-    }
-
-    html += `
-                    </tbody>
-                </table>
-            </div>
-
-            <div style="margin-top: 16px; text-align: center; font-size: 10px; color: #9ca3af;">
-                シンプル血圧記録 (sbpr) - https://sbpr-three.vercel.app/
-            </div>
-        </div>`;
-
-    container.innerHTML = html;
-    return container;
-}
-
-/**
- * PDFレポートを生成して共有またはダウンロード
- */
-async function generateAndSharePDF() {
-    const btn = document.getElementById('share-pdf-btn');
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'PDF生成中...';
-
-    try {
-        const allRecords = await getAllRecords();
-        let records = [...allRecords];
-
-        if (currentPeriod !== 'all') {
-            const cutoff = new Date();
-            cutoff.setDate(cutoff.getDate() - currentPeriod);
-            records = records.filter(r => new Date(r.measuredAt) >= cutoff);
-        }
-
-        records.sort((a, b) => new Date(b.measuredAt) - new Date(a.measuredAt));
-        const avg = calcAverage(records);
-
-        let chartImageDataUrl = null;
-        const canvas = document.getElementById('bp-chart');
-        if (canvas && bpChart) {
-            try {
-                chartImageDataUrl = canvas.toDataURL('image/png');
-            } catch (e) {
-                // グラフ画像取得失敗は無視
-            }
-        }
-
-        const element = buildPdfReportElement(records, avg, chartImageDataUrl);
-
-        const now = new Date();
-        const pad = (n) => String(n).padStart(2, '0');
-        const filename = `sbpr_report_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.pdf`;
-
-        const opt = {
-            margin: [10, 10, 10, 10],
-            filename: filename,
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
-        const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
-
-        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-            await navigator.share({
-                title: 'シンプル血圧記録 - レポート',
-                files: [pdfFile]
-            });
-            showMessage('share-pdf-message', 'レポートを共有しました', 'success');
-        } else {
-            const url = URL.createObjectURL(pdfBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-            showMessage('share-pdf-message', 'レポートをダウンロードしました', 'success');
-        }
-    } catch (error) {
-        showMessage('share-pdf-message', 'レポート生成に失敗しました: ' + error.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
-        const container = document.getElementById('pdf-report-container');
-        if (container) container.innerHTML = '';
     }
 }
 

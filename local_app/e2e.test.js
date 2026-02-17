@@ -850,22 +850,7 @@ describe('E2E Test: sbpr App', () => {
         expect(pageErrors.length).toBe(0);
     }, 60000);
 
-    test('E2E-PWA-004: PDFレポート共有ボタンが表示される', async () => {
-        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
-
-        await page.click('[data-tab="settings"]');
-        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
-
-        const shareBtnVisible = await isVisible('#share-pdf-btn');
-        expect(shareBtnVisible).toBe(true);
-
-        const shareBtnText = await page.$eval('#share-pdf-btn', el => el.textContent);
-        expect(shareBtnText).toContain('PDFレポート');
-
-        expect(pageErrors.length).toBe(0);
-    }, 60000);
-
-    test('E2E-PWA-005: pageerrorが発生しない（PWA込み全タブ巡回）', async () => {
+    test('E2E-PWA-004: pageerrorが発生しない（PWA込み全タブ巡回）', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
         await waitForAppReady();
 

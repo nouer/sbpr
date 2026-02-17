@@ -13,7 +13,6 @@
 - **基準線表示**: 最高血圧 135mmHg / 最低血圧 85mmHg の基準ライン
 - **記録管理**: 一覧表示、編集、削除、日付フィルタ
 - **エクスポート/インポート**: JSON形式でデータのバックアップ・復元
-- **PDFレポート共有**: 統計・グラフ・記録一覧をPDFとして共有・ダウンロード
 - **PWA対応**: ホーム画面インストール、完全オフライン動作、バッジ表示
 - **オフライン動作**: Service Worker + IndexedDB による完全オフライン対応
 - **レスポンシブ対応**: PC・タブレット・スマートフォン対応
@@ -26,7 +25,6 @@
 | スタイル | CSS（ビルドツール不使用） |
 | データストア | IndexedDB |
 | グラフ描画 | [Chart.js](https://www.chartjs.org/) v4 |
-| PDF生成 | [html2pdf.js](https://github.com/eKoopmans/html2pdf.js) v0.10 |
 | PWA | Web App Manifest + Service Worker |
 | テスト | Jest + Puppeteer |
 | コンテナ | Docker (nginx:alpine / node:alpine) |
@@ -136,7 +134,6 @@ docker compose run --rm sbpr-test npm test
 | 完全オフライン動作 | Service Worker によりネットワーク不要で動作 |
 | テーマカラー / スプラッシュ | 起動時にブランドカラーのスプラッシュ表示 |
 | バッジ表示 | 当日未記録時にアイコンにバッジ表示（Chrome/Edge） |
-| PDFレポート共有 | 統計・グラフ・記録一覧をPDFとして共有/ダウンロード |
 
 ## ライセンス
 

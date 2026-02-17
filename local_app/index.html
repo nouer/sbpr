@@ -16,7 +16,6 @@
     <!-- ライブラリ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
 </head>
 <body>
     <!-- 左上固定: ページ先頭へ戻るボタン -->
@@ -213,15 +212,6 @@
                 <p>エクスポートしたJSONファイルからデータを復元します。既存データとマージされます。</p>
                 <button class="btn btn-secondary" id="import-btn">インポート</button>
                 <input type="file" id="import-file" accept="application/json" style="display:none;">
-            </div>
-
-            <div class="setting-item">
-                <h3>レポート共有</h3>
-                <p>血圧の統計・記録・グラフをPDFレポートとして共有またはダウンロードします。</p>
-                <div id="share-pdf-message" class="message"></div>
-                <div class="btn-group">
-                    <button class="btn btn-primary" id="share-pdf-btn">PDFレポートを共有</button>
-                </div>
             </div>
 
             <div class="setting-item">
@@ -425,9 +415,6 @@
             </form>
         </div>
     </div>
-
-    <!-- PDFレポート用非表示コンテナ -->
-    <div id="pdf-report-container" style="position:absolute;left:-9999px;top:0;width:794px;"></div>
 
     <script src="version.js"></script>
     <script src="bp.calc.js"></script>
