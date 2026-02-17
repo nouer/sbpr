@@ -34,6 +34,13 @@
         <h1>シンプル血圧記録</h1>
     </header>
 
+    <!-- 更新バナー（ヘッダー直下） -->
+    <div id="update-banner" class="update-banner" style="display:none;">
+        <span>新しいバージョンが利用可能です</span>
+        <button id="update-banner-btn" class="btn btn-sm" type="button">今すぐ更新</button>
+        <button id="update-banner-close" class="update-banner-close" type="button" aria-label="閉じる">&times;</button>
+    </div>
+
     <!-- タブナビゲーション -->
     <nav class="tab-nav" id="tab-nav">
         <button class="active" data-tab="record">記録</button>
@@ -308,6 +315,14 @@
                 <p id="app-version-info">バージョン: ---</p>
                 <p id="app-build-info">ビルド日時: ---</p>
                 <p>データ保存先: ブラウザ IndexedDB</p>
+            </div>
+            <div class="setting-item">
+                <h3>アプリの更新</h3>
+                <p>新しいバージョンがあるか確認します。</p>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary btn-sm" id="check-update-btn">更新を確認</button>
+                    <span id="update-check-status" style="font-size:0.85em; color:var(--gray-500);"></span>
+                </div>
             </div>
         </div>
     </div>

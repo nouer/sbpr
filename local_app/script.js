@@ -220,6 +220,7 @@ function levelText(value) {
 async function initApp() {
     initVersionInfo();
     initScrollToTop();
+    initUpdateBanner();
     initTabs();
     initForm();
     initChartControls();
@@ -859,6 +860,11 @@ function initSettingsControls() {
     document.getElementById('import-file').addEventListener('change', importData);
     document.getElementById('delete-all-btn').addEventListener('click', confirmDeleteAll);
     document.getElementById('confirm-cancel').addEventListener('click', closeConfirmDialog);
+
+    const checkUpdateBtn = document.getElementById('check-update-btn');
+    if (checkUpdateBtn) {
+        checkUpdateBtn.addEventListener('click', checkForUpdate);
+    }
 }
 
 /**
@@ -1656,25 +1662,122 @@ function setAIInputEnabled(enabled) {
     }
 }
 
-// ===== PWA: Service Worker 登録 =====
+// ===== PWA: Service Worker 登録・更新チェック =====
+
+let swRegistration = null;
+let lastUpdateCheck = 0;
+const UPDATE_CHECK_THROTTLE_MS = 30000;
 
 async function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                if (newWorker) {
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                            showMessage('settings-message', 'アプリが更新されました。再読み込みで最新版になります。', 'info');
-                        }
-                    });
-                }
-            });
-        } catch (e) {
-            // SW登録失敗は無視（HTTP環境等）
+    if (!('serviceWorker' in navigator)) return;
+
+    try {
+        swRegistration = await navigator.serviceWorker.register('/sw.js');
+
+        swRegistration.addEventListener('updatefound', () => {
+            const newWorker = swRegistration.installing;
+            if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                        showUpdateBanner();
+                    }
+                });
+            }
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            showUpdateBanner();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                throttledUpdateCheck();
+            }
+        });
+
+    } catch (e) {
+        // SW登録失敗は無視（HTTP環境等）
+    }
+}
+
+/**
+ * スロットル付き更新チェック（最低30秒間隔）
+ */
+function throttledUpdateCheck() {
+    const now = Date.now();
+    if (now - lastUpdateCheck < UPDATE_CHECK_THROTTLE_MS) return;
+    lastUpdateCheck = now;
+    if (swRegistration) {
+        swRegistration.update().catch(() => {});
+    }
+}
+
+/**
+ * 手動で更新をチェック（設定タブのボタンから呼び出し）
+ */
+async function checkForUpdate() {
+    const statusEl = document.getElementById('update-check-status');
+    if (!swRegistration) {
+        if (statusEl) statusEl.textContent = 'Service Workerが未登録です';
+        return;
+    }
+
+    if (statusEl) statusEl.textContent = '確認中...';
+
+    try {
+        await swRegistration.update();
+        const waiting = swRegistration.waiting;
+        const installing = swRegistration.installing;
+
+        if (waiting || installing) {
+            if (statusEl) statusEl.textContent = '新しいバージョンを検出しました';
+            showUpdateBanner();
+        } else {
+            if (statusEl) statusEl.textContent = '最新バージョンです';
+            setTimeout(() => {
+                if (statusEl) statusEl.textContent = '';
+            }, 3000);
         }
+    } catch (e) {
+        if (statusEl) statusEl.textContent = '確認に失敗しました';
+    }
+}
+
+/**
+ * 更新バナーを表示
+ */
+function showUpdateBanner() {
+    const banner = document.getElementById('update-banner');
+    if (banner) {
+        banner.style.display = 'flex';
+    }
+}
+
+/**
+ * 更新バナーを非表示
+ */
+function hideUpdateBanner() {
+    const banner = document.getElementById('update-banner');
+    if (banner) {
+        banner.style.display = 'none';
+    }
+}
+
+/**
+ * 更新バナーのイベントリスナーを初期化
+ */
+function initUpdateBanner() {
+    const updateBtn = document.getElementById('update-banner-btn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', () => {
+            location.reload();
+        });
+    }
+    const closeBtn = document.getElementById('update-banner-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            hideUpdateBanner();
+        });
     }
 }
 

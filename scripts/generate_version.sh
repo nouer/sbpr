@@ -28,3 +28,9 @@ window.APP_INFO = {
     buildTime: "$BUILD_TIME"
 };
 EOF
+
+# Service Worker の CACHE_NAME をバージョン+ビルドハッシュで更新
+BUILD_HASH=$(date +%s)
+CACHE_NAME="sbpr-v${VERSION}-${BUILD_HASH}"
+sed -i "s|const CACHE_NAME = 'sbpr-[^']*'|const CACHE_NAME = '${CACHE_NAME}'|" local_app/sw.js
+echo "Updated sw.js CACHE_NAME: ${CACHE_NAME}"

@@ -91,3 +91,5 @@
 | E2E-PWA-002 | Service Workerが登録される | トップページにアクセス後、SW登録を確認 | navigator.serviceWorker.controllerまたはregistration が存在する |
 | E2E-PWA-003 | PWA meta tagsが設定されている | トップページにアクセス | theme-color, apple-mobile-web-app-capable等のmetaタグが存在する |
 | E2E-PWA-004 | pageerrorが発生しない（PWA込み全タブ巡回） | 全タブを巡回 | JSエラーが発生しないこと |
+| E2E-PWA-005 | 更新バナー要素が存在する | トップページにアクセス | #update-banner要素が存在し、初期状態ではdisplay:noneである |
+| E2E-PWA-006 | 設定タブに「更新を確認」ボタンが表示される | 設定タブを開く | #check-update-btn ボタンが表示される |

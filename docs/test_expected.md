@@ -74,11 +74,13 @@
 * meta[name="theme-color"]のcontent属性が"#2563eb"である
 * meta[name="apple-mobile-web-app-capable"]のcontent属性が"yes"である
 * PWA関連のスクリプト追加後もpageerrorが発生しない
+* #update-banner 要素が存在し、初期状態では `display: none` である
+* 設定タブに #check-update-btn ボタンが表示される
 
 ## 3. テスト実行結果（最新）
 * 実行日時: 2026-02-17
 * 単体テスト: 全58件 PASS（カバレッジ: Stmts 97.91%, Branch 94.11%, Funcs 100%, Lines 97.29%）
-* E2Eテスト: 全テスト PASS（合計テスト: 77件全て PASS、Test Suites: 2 passed）
+* E2Eテスト: 全テスト PASS（合計テスト: 79件全て PASS、Test Suites: 2 passed）
   * 既存テスト（E2E-001〜E2E-024）: 全て PASS
   * 固定UI要素テスト:
     * E2E-025（バージョン情報表示）は PASS
@@ -91,3 +93,5 @@
     * E2E-PWA-002（Service Worker登録）は PASS
     * E2E-PWA-003（PWA meta tags設定）は PASS
     * E2E-PWA-004（PWA込み全タブ巡回 pageerror検知）は PASS
+    * E2E-PWA-005（更新バナー要素の存在確認）は PASS
+    * E2E-PWA-006（設定タブの「更新を確認」ボタン表示）は PASS

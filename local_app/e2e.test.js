@@ -850,6 +850,60 @@ describe('E2E Test: sbpr App', () => {
         expect(pageErrors.length).toBe(0);
     }, 60000);
 
+    test('E2E-PWA-005: 更新バナー要素が存在し初期状態では非表示', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        const bannerInfo = await page.evaluate(() => {
+            const banner = document.getElementById('update-banner');
+            if (!banner) return { exists: false };
+            const style = window.getComputedStyle(banner);
+            return {
+                exists: true,
+                display: banner.style.display || style.display,
+                hasUpdateBtn: !!document.getElementById('update-banner-btn'),
+                hasCloseBtn: !!document.getElementById('update-banner-close')
+            };
+        });
+
+        expect(bannerInfo.exists).toBe(true);
+        expect(bannerInfo.display).toBe('none');
+        expect(bannerInfo.hasUpdateBtn).toBe(true);
+        expect(bannerInfo.hasCloseBtn).toBe(true);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-PWA-006: 設定タブに「更新を確認」ボタンが表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        const btnInfo = await page.evaluate(() => {
+            const btn = document.getElementById('check-update-btn');
+            if (!btn) return { exists: false };
+            const style = window.getComputedStyle(btn);
+            return {
+                exists: true,
+                visible: style.display !== 'none' && style.visibility !== 'hidden',
+                text: btn.textContent.trim()
+            };
+        });
+
+        expect(btnInfo.exists).toBe(true);
+        expect(btnInfo.visible).toBe(true);
+        expect(btnInfo.text).toBe('更新を確認');
+
+        const statusEl = await page.evaluate(() => {
+            return document.getElementById('update-check-status') !== null;
+        });
+        expect(statusEl).toBe(true);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
     test('E2E-PWA-004: pageerrorが発生しない（PWA込み全タブ巡回）', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
         await waitForAppReady();

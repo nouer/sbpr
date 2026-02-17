@@ -178,9 +178,53 @@ WHO/ISH基準に基づく血圧分類:
 * X軸: 時系列（date adapter使用）
 * Y軸: mmHg / bpm
 
-## 6. AI診断機能
+## 6. PWA更新メカニズム
 
-### 6.1 API通信（OpenAI reverse proxy）
+### 6.1 ビルド時キャッシュバージョニング
+* `generate_version.sh` が `sw.js` の `CACHE_NAME` をビルドごとに動的に書き換える
+* フォーマット: `sbpr-v{VERSION}-{UNIX_TIMESTAMP}`（例: `sbpr-v1.0.0-1739800000`）
+* `sw.js` 自体のバイト内容が変わるため、全ブラウザ（iOS Safari含む）で確実に更新検知される
+* 開発時のデフォルト値: `'sbpr-v1'`（ビルド未実行時のフォールバック）
+
+### 6.2 Service Worker 更新フロー
+1. ブラウザが `sw.js` の変更を検知（起動時 / フォアグラウンド復帰時 / 手動チェック時）
+2. 新しい SW が `install` イベントで新しい `CACHE_NAME` のキャッシュにアセットをプリキャッシュ
+3. `skipWaiting()` で即座にアクティベート
+4. `activate` イベントで旧キャッシュを削除、`clients.claim()` でページを制御下に置く
+5. ページ側で `controllerchange` イベントを受信し、更新バナーを表示
+6. ユーザーがバナーをタップすると `location.reload()` で最新版を読み込む
+
+### 6.3 フォアグラウンド復帰時の自動チェック（iOS対策）
+* `visibilitychange` イベントで `document.visibilityState === 'visible'` を検知
+* `registration.update()` を呼び出してサーバー上の `sw.js` をチェック
+* 連続呼出し抑止: 最低30秒間隔のスロットル制御
+* iOS Safari の standalone PWA ではSWの更新チェックが不定期なため、この仕組みで確実に検知
+
+### 6.4 更新バナー
+* **配置**: ヘッダー直下、`position: sticky; top: 44px; z-index: 99`
+* **HTML**: `<div id="update-banner" class="update-banner">`
+* **表示条件**: `controllerchange` イベント発火時（初回ロード時は除外）
+* **構成要素**:
+  * テキスト「新しいバージョンが利用可能です」
+  * 「今すぐ更新」ボタン → `location.reload()`
+  * 閉じるボタン（×）→ バナーを非表示
+* **初期状態**: `style="display:none;"`
+
+### 6.5 手動更新チェック（設定タブ）
+* 設定タブの「アプリ情報」カード内に「更新を確認」ボタンを配置
+* クリック時に `registration.update()` を呼び出し
+* 結果を `#update-check-status` に表示:
+  * 更新なし: 「最新バージョンです」（3秒後にクリア）
+  * 更新あり: 更新バナーが表示される（`controllerchange` 経由）
+  * エラー: エラーメッセージを表示
+
+### 6.6 SW メッセージリスナー
+* `message` イベントで `{ type: 'SKIP_WAITING' }` を受信した場合に `self.skipWaiting()` を呼び出す
+* 将来の拡張性のために実装（現在は `install` 時の `skipWaiting()` で即座にアクティベート）
+
+## 7. AI診断機能
+
+### 7.1 API通信（OpenAI reverse proxy）
 
 ブラウザから `api.openai.com` を直接呼び出すとCORSでブロックされるため、
 同一オリジンのプロキシ経由で中継する。
