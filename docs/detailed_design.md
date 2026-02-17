@@ -2,12 +2,18 @@
 
 ## 0. 固定UI要素
 
-### 0.1 ページ先頭へ戻るボタン
+### 0.1 ページ先頭へ戻るボタン / ヘッダータップ
 * **配置**: `position: fixed; top: 8px; left: 8px; z-index: 9999`
 * **HTML**: `<button id="scroll-to-top-btn">` にSVG上矢印アイコンを内包
 * **動作**: クリック時に `window.scrollTo({ top: 0, behavior: 'smooth' })` を実行
 * **初期化**: `initScrollToTop()` で `click` イベントリスナーを登録
 * **印刷対応**: `no-print` クラスにより `@media print` で非表示
+* **ヘッダータップ**: `<header class="app-header">` 全体をクリック/タップしてもスクロールトップボタンと同じ動作（ページ先頭へスムーズスクロール）を行う
+  * `cursor: pointer` でクリック可能であることを視覚的に表現
+  * `user-select: none` でテキスト選択を防止
+  * `-webkit-tap-highlight-color: transparent` でモバイルタップ時のハイライトを抑制
+* **内部スクロールコンテナのリセット**: ページ先頭への移動時に `.ai-chat-messages`（AI健康アドバイスのチャット領域）のスクロール位置も先頭にリセットする
+  * `.ai-chat-messages` は `max-height: 500px; overflow-y: auto` で独自のスクロールコンテナを持つため、`window.scrollTo` だけでは戻らない
 
 ### 0.2 バージョン情報表示
 * **配置**: `position: fixed; top: 6px; right: 10px; z-index: 9999`

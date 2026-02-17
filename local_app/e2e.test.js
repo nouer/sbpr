@@ -862,4 +862,101 @@ describe('E2E Test: sbpr App', () => {
 
         expect(pageErrors.length).toBe(0);
     }, 60000);
+
+    test('E2E-028: ヘッダータップでページ先頭へ戻る', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        // ヘッダーにcursor:pointerが設定されていることを確認
+        const headerCursor = await page.evaluate(() => {
+            const header = document.querySelector('.app-header');
+            return window.getComputedStyle(header).cursor;
+        });
+        expect(headerCursor).toBe('pointer');
+
+        // ページ最下部までスクロール
+        await page.evaluate(() => {
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+        await new Promise(r => setTimeout(r, 500));
+
+        const scrollYAfterScrollDown = await page.evaluate(() => window.scrollY);
+        expect(scrollYAfterScrollDown).toBeGreaterThan(0);
+
+        // ヘッダーをクリック
+        await page.click('.app-header');
+        await new Promise(r => setTimeout(r, 2000));
+
+        // ページが最上部に戻っていることを確認
+        const scrollYAfterHeaderClick = await page.evaluate(() => window.scrollY);
+        expect(scrollYAfterHeaderClick).toBeLessThanOrEqual(10);
+
+        // ヘッダーが見えていることを確認
+        const headerVisible = await isVisible('.app-header');
+        expect(headerVisible).toBe(true);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-029: ↑ボタン/ヘッダータップでAIチャット領域も先頭に戻る', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        // APIキーをセットしてAIタブを有効化
+        await page.evaluate(() => {
+            localStorage.setItem('sbpr_openai_api_key', 'sk-test-dummy-key');
+        });
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        // AIタブに切り替え
+        await page.click('[data-tab="ai"]');
+        await page.waitForSelector('#tab-ai.active', { timeout: 5000 });
+
+        // AIチャット領域に長いコンテンツを挿入してスクロール可能にする
+        await page.evaluate(() => {
+            const msgs = [];
+            for (let i = 0; i < 20; i++) {
+                msgs.push(
+                    { role: 'user', content: `質問${i + 1}`, displayContent: `質問${i + 1}` },
+                    { role: 'assistant', content: `回答${i + 1}です。血圧に関するアドバイスをお伝えします。適度な運動と食事管理が重要です。` }
+                );
+            }
+            aiConversation = msgs;
+            renderAIChatMessages(false);
+        });
+        await new Promise(r => setTimeout(r, 300));
+
+        // AIチャット領域がスクロール可能であることを確認
+        const chatScrollInfo = await page.evaluate(() => {
+            const container = document.getElementById('ai-chat-messages');
+            return {
+                scrollTop: container.scrollTop,
+                scrollHeight: container.scrollHeight,
+                clientHeight: container.clientHeight,
+                isScrollable: container.scrollHeight > container.clientHeight
+            };
+        });
+        expect(chatScrollInfo.isScrollable).toBe(true);
+
+        // renderAIChatMessages で末尾にスクロールされているはずなので scrollTop > 0 を確認
+        expect(chatScrollInfo.scrollTop).toBeGreaterThan(0);
+
+        // ↑ボタンをクリック
+        await page.click('#scroll-to-top-btn');
+        await new Promise(r => setTimeout(r, 2000));
+
+        // AIチャット領域のスクロール位置が先頭付近に戻っていることを確認
+        const chatScrollAfter = await page.evaluate(() => {
+            return document.getElementById('ai-chat-messages').scrollTop;
+        });
+        expect(chatScrollAfter).toBeLessThanOrEqual(10);
+
+        // クリーンアップ
+        await page.evaluate(() => {
+            localStorage.removeItem('sbpr_openai_api_key');
+        });
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
 });

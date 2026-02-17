@@ -100,7 +100,7 @@ docker compose run --rm sbpr-test npm test
 ```
 
 - **単体テスト**: `bp.calc.test.js` — 血圧分類・統計計算・バリデーション
-- **E2Eテスト**: `e2e.test.js` — ページ表示・記録操作・タブ切替・pageerror検知
+- **E2Eテスト**: `e2e.test.js` — ページ表示・記録操作・タブ切替・スクロール機能・pageerror検知
 
 ## Docker構成（3サービス体制）
 

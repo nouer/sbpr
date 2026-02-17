@@ -272,15 +272,23 @@ function initVersionInfo() {
  */
 function initScrollToTop() {
     try {
+        const scrollToTop = () => {
+            try {
+                window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            } catch (e) {
+                window.scrollTo(0, 0);
+            }
+            document.querySelectorAll('.ai-chat-messages').forEach(el => {
+                try { el.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { el.scrollTop = 0; }
+            });
+        };
         const scrollTopBtn = document.getElementById('scroll-to-top-btn');
         if (scrollTopBtn) {
-            scrollTopBtn.addEventListener('click', () => {
-                try {
-                    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                } catch (e) {
-                    window.scrollTo(0, 0);
-                }
-            });
+            scrollTopBtn.addEventListener('click', scrollToTop);
+        }
+        const appHeader = document.querySelector('.app-header');
+        if (appHeader) {
+            appHeader.addEventListener('click', scrollToTop);
         }
     } catch (e) {
         // ボタン初期化失敗時は無視
