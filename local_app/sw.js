@@ -3,7 +3,7 @@
  * アセットキャッシュによる完全オフライン対応
  */
 
-const CACHE_NAME = 'sbpr-v1.0.0-1771468065';
+const CACHE_NAME = 'sbpr-v1.0.0-1771474661';
 
 const PRECACHE_ASSETS = [
     '/',
@@ -13,9 +13,9 @@ const PRECACHE_ASSETS = [
     '/bp.calc.js',
     '/version.js',
     '/manifest.json',
-    '/icons/icon-192.svg',
-    '/icons/icon-512.svg',
-    '/icons/icon-maskable.svg',
+    '/icons/icon-192.png',
+    '/icons/icon-512.png',
+    '/icons/icon-maskable.png',
     'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js',
     'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js'
 ];
