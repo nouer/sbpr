@@ -1,122 +1,139 @@
-<h1 align="center">
-  <br>
-  💓 シンプル血圧記録
-  <br>
-</h1>
+<p align="center">
+  <img src="local_app/icons/icon-192.svg" alt="シンプル血圧記録" width="96">
+</p>
 
-<h3 align="center">毎日の血圧管理を、もっとシンプルに。</h3>
+<h1 align="center">シンプル血圧記録</h1>
 
 <p align="center">
-  アカウント登録不要・完全無料・データはあなたの端末だけに保存。<br>
-  スマートフォンでもPCでも、すぐに使い始められる血圧記録Webアプリです。
+  <strong>毎日の血圧管理を、もっとシンプルに。</strong><br>
+  アカウント不要。広告なし。データはあなたの端末だけに。
 </p>
 
 <p align="center">
-  <a href="https://sbpr-three.vercel.app/"><strong>▶ 今すぐ使ってみる</strong></a>
+  <a href="https://sbpr.nouer.net/">
+    <img src="https://img.shields.io/badge/%E2%96%B6_%E4%BB%8A%E3%81%99%E3%81%90%E4%BD%BF%E3%81%A3%E3%81%A6%E3%81%BF%E3%82%8B-FF4081?style=for-the-badge&logoColor=white" alt="今すぐ使ってみる">
+  </a>
 </p>
 
 <p align="center">
-  <img src="docs/images/01_record_form.png" alt="記録画面" width="260">
-  &nbsp;&nbsp;
-  <img src="docs/images/03_chart_continuous.png" alt="グラフ画面" width="260">
-  &nbsp;&nbsp;
-  <img src="docs/images/06_history_tab.png" alt="履歴画面" width="260">
+  <img src="https://img.shields.io/badge/費用-完全無料-00C853?style=flat-square" alt="完全無料">
+  <img src="https://img.shields.io/badge/登録-不要-2196F3?style=flat-square" alt="登録不要">
+  <img src="https://img.shields.io/badge/広告-なし-FF9800?style=flat-square" alt="広告なし">
+  <img src="https://img.shields.io/badge/通信-なし-9C27B0?style=flat-square" alt="データ送信なし">
+  <img src="https://img.shields.io/badge/対応-PWA_オフライン-607D8B?style=flat-square" alt="PWA対応">
+</p>
+
+<br>
+
+<p align="center">
+  <img src="docs/images/01_record_form.png" alt="記録画面" width="240">
+  &nbsp;
+  <img src="docs/images/03_chart_continuous.png" alt="グラフ画面" width="240">
+  &nbsp;
+  <img src="docs/images/04_chart_daynight.png" alt="日中・夜間グラフ" width="240">
+  &nbsp;
+  <img src="docs/images/06_history_tab.png" alt="履歴画面" width="240">
 </p>
 
 ---
 
-## なぜ「シンプル血圧記録」？
+## 血圧管理、こんなお悩みありませんか？
 
-血圧管理アプリは数多くありますが、多くはアカウント登録を求めたり、広告が表示されたり、データがクラウドに送信されたりします。
+> *「血圧手帳を忘れてしまう」「アプリは広告が邪魔」「個人の健康データをクラウドに預けるのが不安」*
 
-**シンプル血圧記録**は、そのすべてを排除しました。
+**シンプル血圧記録**は、そんな悩みをすべて解決するために生まれた血圧管理Webアプリです。
 
-- **アカウント登録なし** — URLを開くだけで即利用開始
-- **広告なし** — 集中を妨げる要素はゼロ
-- **データ送信なし** — 血圧データは端末内（IndexedDB）に保存。サーバーには一切送信しません
-- **完全無料** — すべての機能を制限なく利用可能
+ブラウザでURLを開くだけ。ダウンロードもアカウント登録も不要。あなたの血圧データは端末の中だけに保存され、外部に一切送信されません。
+
+<p align="center">
+  <a href="https://sbpr.nouer.net/"><strong>▶ https://sbpr.nouer.net/</strong></a>
+</p>
+
+---
+
+## 選ばれる4つの理由
+
+<table>
+  <tr>
+    <td width="25%" align="center"><h3>🔓</h3><strong>プライバシー最優先</strong><br><br>データは端末内（IndexedDB）にのみ保存。サーバーへの送信・トラッキングは一切なし。あなたの健康情報を安心して記録できます。</td>
+    <td width="25%" align="center"><h3>⚡</h3><strong>3秒で記録開始</strong><br><br>URLを開けば即利用可能。アカウント登録・メール認証・アプリダウンロードすべて不要。前回値が自動入力されるので、変わった項目だけ修正するだけ。</td>
+    <td width="25%" align="center"><h3>📊</h3><strong>一目でわかるグラフ</strong><br><br>血圧の推移を美しいグラフで可視化。日中・夜間の比較表示にも対応し、JSH2019基準線で自分の位置を直感的に把握できます。</td>
+    <td width="25%" align="center"><h3>📱</h3><strong>どこでも使える</strong><br><br>スマホ・タブレット・PCすべてに対応。PWA対応でホーム画面に追加すれば、オフラインでもネイティブアプリのように動作します。</td>
+  </tr>
+</table>
 
 ---
 
 ## 主な機能
 
-### 📝 かんたん記録
+### 📝 かんたん血圧記録
 
-血圧値を入力して保存するだけ。前回の値が自動でプリフィルされるので、変化のある項目だけ修正すればOKです。
+血圧値を入力して保存するだけのシンプル操作。
 
-- 最高血圧・最低血圧（必須）
-- 脈拍・体重・気分・体調・メモ（任意）
+- **最高血圧・最低血圧**（必須）+ **脈拍・体重・気分・体調・メモ**（任意）
+- 前回の値が自動プリフィル — 変化した項目だけ修正すればOK
 - 測定日時の変更も可能
+- **JSH2019 家庭血圧基準**に基づき、血圧分類（正常血圧〜III度高血圧）を自動表示
 
 <p align="center">
   <img src="docs/images/02_record_recent.png" alt="直近の記録" width="300">
 </p>
 
-> JSH2019 家庭血圧基準に基づき、記録ごとに血圧分類（正常血圧〜III度高血圧）が自動表示されます。
-
 ---
 
-### 📊 見やすいグラフ
+### 📊 見やすいグラフ & 統計
 
-血圧の推移を折れ線グラフで一目確認。7日・30日・90日・全期間の切り替えが可能です。
+血圧の推移を折れ線グラフで確認。**7日・30日・90日・全期間**で切り替えられます。
 
 <p align="center">
-  <img src="docs/images/03_chart_continuous.png" alt="連続グラフ" width="300">
-  &nbsp;&nbsp;&nbsp;
-  <img src="docs/images/04_chart_daynight.png" alt="日中・夜間グラフ" width="300">
+  <img src="docs/images/03_chart_continuous.png" alt="連続グラフ" width="280">
+  &nbsp;&nbsp;
+  <img src="docs/images/04_chart_daynight.png" alt="日中・夜間グラフ" width="280">
+  &nbsp;&nbsp;
+  <img src="docs/images/05_chart_stats.png" alt="統計情報" width="280">
 </p>
-
-**2つの表示モード:**
 
 | モード | 特徴 |
 |--------|------|
-| **連続** | 全データを1本の線で時系列表示（従来型） |
-| **日中・夜間** | 日中と夜間のデータを色分け表示。時間帯区切りはカスタマイズ可能 |
+| **連続表示** | 全データを1本の線で時系列表示 |
+| **日中・夜間** | 時間帯ごとに色分け表示。区切り時間はカスタマイズ可能 |
 
-家庭血圧の基準線（135/85 mmHg）が常にグラフ上に表示されるので、自分の血圧がどの位置にあるか直感的に把握できます。
-
----
-
-### 📈 統計情報
-
-選択期間の平均値と記録数が自動計算されます。
-
-<p align="center">
-  <img src="docs/images/05_chart_stats.png" alt="統計情報" width="300">
-</p>
+家庭血圧の基準線（135/85 mmHg）が常にグラフ上に表示されるので、自分の血圧レベルを直感的に把握できます。選択期間の**平均血圧・平均脈拍・記録数**も自動計算されます。
 
 ---
 
-### 🤖 AI健康アドバイス
+### 🤖 AI健康アドバイス（オプション）
 
-OpenAI APIキーを設定すると、あなたの血圧データに基づいたAI健康アドバイスを受けられます。
+OpenAI APIキーを設定すると、あなたの血圧データに基づいた**パーソナライズされた健康アドバイス**を受けられます。
 
-- 血圧の傾向分析
-- 食事・運動・生活習慣に関する実践的なアドバイス
-- チャット形式で追加の質問も可能
+- 血圧の傾向分析と生活改善のヒント
+- チャット形式で気になることを追加質問
+- 服薬情報などのメモを加味した分析
 
 <p align="center">
   <img src="docs/images/10_settings_ai.png" alt="AI設定" width="300">
 </p>
 
-> ※ AI診断は医療行為ではありません。参考情報としてご利用ください。
+> ※ AI診断は医療行為ではありません。参考情報としてご活用ください。
 
 ---
 
-### 📱 スマートフォン最適化 & PWA対応
+### 📱 PWA対応 — ネイティブアプリのように使える
 
-スマートフォンのホーム画面に追加すれば、ネイティブアプリのように利用できます。
+ホーム画面に追加すれば、まるでインストールしたアプリのように使えます。
 
-- **完全オフライン動作** — インターネット接続なしでも記録・閲覧可能
-- **ホーム画面アイコン** — ワンタップで起動
-- **バッジ通知** — 当日の記録がまだない場合、アイコンにバッジを表示（Chrome/Edge）
-- **自動更新** — 新バージョンが利用可能になると自動通知
+| 機能 | 説明 |
+|------|------|
+| **完全オフライン動作** | インターネット接続なしでも記録・閲覧可能 |
+| **ホーム画面アイコン** | ワンタップで起動 |
+| **バッジ通知** | 当日未記録の場合にアイコンにバッジ表示（Chrome/Edge） |
+| **自動更新通知** | 新バージョンが利用可能になると自動でお知らせ |
 
 ---
 
-### 💾 データのバックアップ
+### 💾 データバックアップ & 移行
 
-JSON形式でエクスポート/インポートに対応。端末の買い替え時もデータを簡単に移行できます。
+JSON形式でエクスポート/インポートに対応。端末の買い替え時もデータを簡単に引き継げます。
 
 <p align="center">
   <img src="docs/images/07_settings_data.png" alt="データ管理" width="300">
@@ -124,9 +141,9 @@ JSON形式でエクスポート/インポートに対応。端末の買い替え
 
 ---
 
-### ✏️ 記録の編集・管理
+### ✏️ 記録の編集・削除
 
-過去の記録はいつでも編集・削除可能。履歴タブでは日付フィルタで期間を絞り込めます。
+過去の記録はいつでも修正・削除可能。履歴タブでは日付フィルタで期間を絞り込めます。
 
 <p align="center">
   <img src="docs/images/11_edit_dialog.png" alt="編集画面" width="300">
@@ -134,83 +151,93 @@ JSON形式でエクスポート/インポートに対応。端末の買い替え
 
 ---
 
-## 使い方
+## 使い方 — たった3ステップ
 
-### ステップ 1: アクセス
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <h3>Step 1</h3>
+      <strong>アクセス</strong><br><br>
+      ブラウザで<a href="https://sbpr.nouer.net/">sbpr.nouer.net</a>を開く。<br>アカウント登録は不要です。
+    </td>
+    <td align="center" width="33%">
+      <h3>Step 2</h3>
+      <strong>記録する</strong><br><br>
+      血圧値を入力して<br>「記録を保存」をタップ。
+    </td>
+    <td align="center" width="33%">
+      <h3>Step 3</h3>
+      <strong>振り返る</strong><br><br>
+      グラフで推移を確認。<br>統計情報で平均値をチェック。
+    </td>
+  </tr>
+</table>
 
-ブラウザで以下のURLにアクセスするだけ。アカウント登録は不要です。
+<br>
 
-👉 **https://sbpr-three.vercel.app/**
-
-### ステップ 2: 記録する
-
-血圧値を入力して「記録を保存」をタップ。
-
-### ステップ 3: 確認する
-
-グラフタブで推移を確認。統計情報で平均値をチェック。
-
-### (オプション) ホーム画面に追加
-
-- **iPhone**: Safari → 共有ボタン → 「ホーム画面に追加」
-- **Android**: Chrome → メニュー → 「ホーム画面に追加」
+> **ホーム画面に追加するには:**
+> - **iPhone** — Safari → 共有ボタン → 「ホーム画面に追加」
+> - **Android** — Chrome → メニュー → 「ホーム画面に追加」
 
 ---
 
-## プライバシーへのこだわり
+## プライバシーポリシー
 
 | 項目 | 内容 |
 |------|------|
-| データ保存先 | 端末内のブラウザ（IndexedDB） |
-| サーバー送信 | 一切なし（AI診断利用時のみOpenAI APIへ送信） |
-| アカウント | 不要 |
-| トラッキング | なし |
-| 広告 | なし |
+| **データ保存先** | 端末内のブラウザ（IndexedDB） |
+| **サーバーへの送信** | 一切なし *（AI機能利用時のみOpenAI APIへ送信）* |
+| **アカウント** | 不要 |
+| **トラッキング・解析** | なし |
+| **広告** | なし |
+| **Cookie** | 使用しません |
 
-あなたの健康データは、あなたの端末だけにあります。
+**あなたの健康データは、あなたの端末だけにあります。**
 
 ---
 
 ## 対応環境
 
-| 環境 | 対応状況 |
-|------|----------|
-| Chrome (Android/PC) | ✅ 全機能対応 |
-| Safari (iPhone/iPad) | ✅ 全機能対応 |
-| Edge (PC) | ✅ 全機能対応 |
+| ブラウザ | 対応状況 |
+|----------|----------|
+| Chrome（Android / PC） | ✅ 全機能対応 |
+| Safari（iPhone / iPad） | ✅ 全機能対応 |
+| Edge（PC） | ✅ 全機能対応 |
 | Firefox | ✅ 対応（一部PWA機能を除く） |
 
 ---
 
-## 技術情報
+## 技術仕様
 
-開発者向けの技術情報です。
+軽量・高速を追求した、フレームワーク不使用のピュアWeb技術スタック。
 
-| 項目 | 技術 |
-|------|------|
-| フロントエンド | HTML + vanilla JavaScript（SPA、フレームワーク不使用） |
-| スタイル | CSS（ビルドツール不使用） |
+| レイヤー | 技術 |
+|----------|------|
+| フロントエンド | HTML + Vanilla JavaScript（SPA） |
+| スタイル | Pure CSS（ビルドツール不使用） |
 | データストア | IndexedDB |
 | グラフ描画 | [Chart.js](https://www.chartjs.org/) v4 |
 | PWA | Web App Manifest + Service Worker |
-| テスト | Jest + Puppeteer |
-| コンテナ | Docker（nginx:alpine / node:alpine） |
+| テスト | Jest + Puppeteer（E2E） |
+| コンテナ | Docker（nginx:alpine） |
 | デプロイ | Vercel |
 
-### ローカル開発
+<details>
+<summary><strong>開発者向け: ローカル環境構築</strong></summary>
 
 ```bash
-# Docker でビルド＆起動
+# Docker でビルド & 起動
 ./scripts/build.sh
 
 # ブラウザで http://localhost:8082 にアクセス
 ```
 
-### テスト実行
-
 ```bash
+# テスト実行
 docker compose run --rm sbpr-test npm test
 ```
+
+</details>
 
 ---
 
@@ -226,7 +253,10 @@ docker compose run --rm sbpr-test npm test
 
 <p align="center">
   <br>
-  <a href="https://sbpr-three.vercel.app/"><strong>💓 シンプル血圧記録を使ってみる →</strong></a>
+  <a href="https://sbpr.nouer.net/">
+    <img src="https://img.shields.io/badge/%F0%9F%92%93_%E3%82%B7%E3%83%B3%E3%83%97%E3%83%AB%E8%A1%80%E5%9C%A7%E8%A8%98%E9%8C%B2%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%81%BF%E3%82%8B-FF4081?style=for-the-badge&logoColor=white" alt="シンプル血圧記録を使ってみる">
+  </a>
   <br><br>
-  毎日の血圧管理を、もっとシンプルに。
+  <strong>毎日の血圧管理を、もっとシンプルに。</strong><br>
+  <sub>完全無料 / 登録不要 / プライバシー重視</sub>
 </p>
