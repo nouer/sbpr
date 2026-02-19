@@ -577,6 +577,10 @@ body {
     background: var(--gray-100);
 }
 
+#chart-mode-controls {
+    margin-bottom: 8px;
+}
+
 /* === 設定 === */
 .setting-item {
     padding: 16px 0;

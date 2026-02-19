@@ -134,6 +134,20 @@ async function deleteAllRecords() {
 
 let bpChart = null;
 let currentPeriod = 7;
+let currentChartMode = 'continuous';
+
+const LS_KEY_DAY_START = 'sbpr_day_start_hour';
+const LS_KEY_NIGHT_START = 'sbpr_night_start_hour';
+
+function getDayStartHour() {
+    const v = parseInt(localStorage.getItem(LS_KEY_DAY_START), 10);
+    return isNaN(v) ? 6 : Math.max(0, Math.min(23, v));
+}
+
+function getNightStartHour() {
+    const v = parseInt(localStorage.getItem(LS_KEY_NIGHT_START), 10);
+    return isNaN(v) ? 18 : Math.max(0, Math.min(23, v));
+}
 
 // ===== 3段階セレクタ ヘルパー =====
 
@@ -223,7 +237,9 @@ async function initApp() {
     initUpdateBanner();
     initTabs();
     initForm();
+    initChartModeControls();
     initChartControls();
+    initChartSettings();
     initFilterControls();
     initSettingsControls();
     initEditDialog();
@@ -633,6 +649,41 @@ async function saveEditRecord() {
 
 // ===== グラフ =====
 
+function initChartModeControls() {
+    const buttons = document.querySelectorAll('#chart-mode-controls button');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentChartMode = btn.dataset.mode;
+            refreshChart();
+        });
+    });
+}
+
+function initChartSettings() {
+    const dayInput = document.getElementById('input-day-start');
+    const nightInput = document.getElementById('input-night-start');
+
+    dayInput.value = getDayStartHour();
+    nightInput.value = getNightStartHour();
+
+    document.getElementById('save-chart-settings-btn').addEventListener('click', () => {
+        const dayVal = parseInt(dayInput.value, 10);
+        const nightVal = parseInt(nightInput.value, 10);
+        if (isNaN(dayVal) || dayVal < 0 || dayVal > 23 || isNaN(nightVal) || nightVal < 0 || nightVal > 23) {
+            showMessage('chart-settings-message', '0〜23の整数を入力してください', 'error');
+            return;
+        }
+        localStorage.setItem(LS_KEY_DAY_START, dayVal);
+        localStorage.setItem(LS_KEY_NIGHT_START, nightVal);
+        showMessage('chart-settings-message', '設定を保存しました', 'success');
+        if (currentChartMode === 'daynight') {
+            refreshChart();
+        }
+    });
+}
+
 function initChartControls() {
     const buttons = document.querySelectorAll('#chart-period-controls button');
     buttons.forEach(btn => {
@@ -663,14 +714,22 @@ function updateChart(records) {
     const ctx = document.getElementById('bp-chart');
     if (!ctx) return;
 
+    if (bpChart) {
+        bpChart.destroy();
+    }
+
+    if (currentChartMode === 'daynight') {
+        updateChartDayNight(ctx, records);
+    } else {
+        updateChartContinuous(ctx, records);
+    }
+}
+
+function updateChartContinuous(ctx, records) {
     const labels = records.map(r => new Date(r.measuredAt));
     const systolicData = records.map(r => r.systolic);
     const diastolicData = records.map(r => r.diastolic);
     const pulseData = records.map(r => r.pulse);
-
-    if (bpChart) {
-        bpChart.destroy();
-    }
 
     bpChart = new Chart(ctx, {
         type: 'line',
@@ -762,37 +821,187 @@ function updateChart(records) {
                 }
             }
         },
-        plugins: [{
-            id: 'referenceLinesPlugin',
-            beforeDraw: function(chart) {
-                const yScale = chart.scales.y;
-                const ctx = chart.ctx;
-                const chartArea = chart.chartArea;
-
-                const drawLine = (value, color, label) => {
-                    const y = yScale.getPixelForValue(value);
-                    if (y < chartArea.top || y > chartArea.bottom) return;
-                    ctx.save();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 1;
-                    ctx.setLineDash([6, 4]);
-                    ctx.beginPath();
-                    ctx.moveTo(chartArea.left, y);
-                    ctx.lineTo(chartArea.right, y);
-                    ctx.stroke();
-                    ctx.fillStyle = color;
-                    ctx.font = '10px sans-serif';
-                    ctx.textAlign = 'left';
-                    ctx.fillText(label, chartArea.left + 4, y - 4);
-                    ctx.restore();
-                };
-
-                drawLine(135, 'rgba(220, 38, 38, 0.5)', '基準 135');
-                drawLine(85, 'rgba(37, 99, 235, 0.5)', '基準 85');
-            }
-        }]
+        plugins: [referenceLinesPlugin]
     });
 }
+
+function isDaytime(dateStr) {
+    const d = new Date(dateStr);
+    const hour = d.getHours();
+    const dayStart = getDayStartHour();
+    const nightStart = getNightStartHour();
+    if (dayStart < nightStart) {
+        return hour >= dayStart && hour < nightStart;
+    } else {
+        return hour >= dayStart || hour < nightStart;
+    }
+}
+
+function updateChartDayNight(ctx, records) {
+    const dayRecords = records.filter(r => isDaytime(r.measuredAt));
+    const nightRecords = records.filter(r => !isDaytime(r.measuredAt));
+
+    const toXY = (recs, field) => recs.map(r => ({ x: new Date(r.measuredAt), y: r[field] }));
+
+    bpChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: '日中 最高 (mmHg)',
+                    data: toXY(dayRecords, 'systolic'),
+                    borderColor: '#dc2626',
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#dc2626',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: '日中 最低 (mmHg)',
+                    data: toXY(dayRecords, 'diastolic'),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#2563eb',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: '日中 脈拍 (bpm)',
+                    data: toXY(dayRecords, 'pulse'),
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    borderWidth: 1.5,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#16a34a',
+                    borderDash: [4, 4],
+                    tension: 0.3,
+                    fill: false,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: '夜間 最高 (mmHg)',
+                    data: toXY(nightRecords, 'systolic'),
+                    borderColor: '#f87171',
+                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#f87171',
+                    borderDash: [6, 3],
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: '夜間 最低 (mmHg)',
+                    data: toXY(nightRecords, 'diastolic'),
+                    borderColor: '#60a5fa',
+                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#60a5fa',
+                    borderDash: [6, 3],
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: '夜間 脈拍 (bpm)',
+                    data: toXY(nightRecords, 'pulse'),
+                    borderColor: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                    borderWidth: 1.5,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#4ade80',
+                    borderDash: [4, 4, 1, 4],
+                    tension: 0.3,
+                    fill: false,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'nearest',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, padding: 12 }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(items) {
+                            if (items.length > 0) {
+                                return formatDateTime(items[0].parsed.x);
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        displayFormats: { day: 'MM/dd' }
+                    },
+                    title: { display: true, text: '日付' }
+                },
+                y: {
+                    position: 'left',
+                    title: { display: true, text: 'mmHg' },
+                    suggestedMin: 40,
+                    suggestedMax: 200,
+                    grid: { color: 'rgba(0,0,0,0.06)' }
+                },
+                y1: {
+                    position: 'right',
+                    title: { display: true, text: 'bpm' },
+                    suggestedMin: 40,
+                    suggestedMax: 120,
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        },
+        plugins: [referenceLinesPlugin]
+    });
+}
+
+const referenceLinesPlugin = {
+    id: 'referenceLinesPlugin',
+    beforeDraw: function(chart) {
+        const yScale = chart.scales.y;
+        const ctx = chart.ctx;
+        const chartArea = chart.chartArea;
+
+        const drawLine = (value, color, label) => {
+            const y = yScale.getPixelForValue(value);
+            if (y < chartArea.top || y > chartArea.bottom) return;
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(chartArea.left, y);
+            ctx.lineTo(chartArea.right, y);
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(label, chartArea.left + 4, y - 4);
+            ctx.restore();
+        };
+
+        drawLine(135, 'rgba(220, 38, 38, 0.5)', '基準 135');
+        drawLine(85, 'rgba(37, 99, 235, 0.5)', '基準 85');
+    }
+};
 
 function updateStats(records) {
     const avg = calcAverage(records);
@@ -899,7 +1108,11 @@ async function exportData() {
             records: records,
             profile: profile,
             aiMemo: aiMemo,
-            aiModel: aiModel
+            aiModel: aiModel,
+            chartSettings: {
+                dayStartHour: getDayStartHour(),
+                nightStartHour: getNightStartHour()
+            }
         };
 
         const json = JSON.stringify(data, null, 2);
@@ -988,10 +1201,24 @@ async function importData(event) {
             if (aiModelSelect) aiModelSelect.value = data.aiModel;
         }
 
+        if (data.chartSettings) {
+            if (data.chartSettings.dayStartHour != null) {
+                localStorage.setItem(LS_KEY_DAY_START, data.chartSettings.dayStartHour);
+                const dayInput = document.getElementById('input-day-start');
+                if (dayInput) dayInput.value = data.chartSettings.dayStartHour;
+            }
+            if (data.chartSettings.nightStartHour != null) {
+                localStorage.setItem(LS_KEY_NIGHT_START, data.chartSettings.nightStartHour);
+                const nightInput = document.getElementById('input-night-start');
+                if (nightInput) nightInput.value = data.chartSettings.nightStartHour;
+            }
+        }
+
         const parts = [`${importedCount}件のデータをインポートしました（重複${data.records.length - importedCount}件スキップ）`];
         if (data.profile) parts.push('プロフィールを復元しました');
         if (data.aiMemo != null) parts.push('AI備考を復元しました');
         if (data.aiModel != null) parts.push('AIモデル設定を復元しました');
+        if (data.chartSettings) parts.push('グラフ設定を復元しました');
         showMessage('settings-message', parts.join('。'), 'success');
         await refreshAll();
     } catch (error) {
