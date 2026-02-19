@@ -1,143 +1,232 @@
-# シンプル血圧記録 (sbpr)
+<h1 align="center">
+  <br>
+  💓 シンプル血圧記録
+  <br>
+</h1>
 
-日常の血圧測定データを簡単に記録・確認できるWebアプリケーションです。  
-ブラウザ内（IndexedDB）にデータを保存するため、サーバーへのデータ送信は一切行いません。
+<h3 align="center">毎日の血圧管理を、もっとシンプルに。</h3>
 
-**デモ**: [https://sbpr-three.vercel.app/](https://sbpr-three.vercel.app/)
+<p align="center">
+  アカウント登録不要・完全無料・データはあなたの端末だけに保存。<br>
+  スマートフォンでもPCでも、すぐに使い始められる血圧記録Webアプリです。
+</p>
+
+<p align="center">
+  <a href="https://sbpr-three.vercel.app/"><strong>▶ 今すぐ使ってみる</strong></a>
+</p>
+
+<p align="center">
+  <img src="docs/images/01_record_form.png" alt="記録画面" width="260">
+  &nbsp;&nbsp;
+  <img src="docs/images/03_chart_continuous.png" alt="グラフ画面" width="260">
+  &nbsp;&nbsp;
+  <img src="docs/images/06_history_tab.png" alt="履歴画面" width="260">
+</p>
+
+---
+
+## なぜ「シンプル血圧記録」？
+
+血圧管理アプリは数多くありますが、多くはアカウント登録を求めたり、広告が表示されたり、データがクラウドに送信されたりします。
+
+**シンプル血圧記録**は、そのすべてを排除しました。
+
+- **アカウント登録なし** — URLを開くだけで即利用開始
+- **広告なし** — 集中を妨げる要素はゼロ
+- **データ送信なし** — 血圧データは端末内（IndexedDB）に保存。サーバーには一切送信しません
+- **完全無料** — すべての機能を制限なく利用可能
+
+---
 
 ## 主な機能
 
-- **血圧記録**: 最高血圧・最低血圧・脈拍数・メモを入力して保存
-- **血圧分類**: JSH2019 家庭血圧基準に基づく自動分類（正常血圧〜III度高血圧）
-- **グラフ表示**: Chart.js による血圧推移の折れ線グラフ（7日/30日/90日/全期間）
-- **基準線表示**: 最高血圧 135mmHg / 最低血圧 85mmHg の基準ライン
-- **記録管理**: 一覧表示、編集、削除、日付フィルタ
-- **エクスポート/インポート**: JSON形式でデータのバックアップ・復元
-- **PWA対応**: ホーム画面インストール、完全オフライン動作、バッジ表示
-- **オフライン動作**: Service Worker + IndexedDB による完全オフライン対応
-- **レスポンシブ対応**: PC・タブレット・スマートフォン対応
+### 📝 かんたん記録
 
-## 技術スタック
+血圧値を入力して保存するだけ。前回の値が自動でプリフィルされるので、変化のある項目だけ修正すればOKです。
+
+- 最高血圧・最低血圧（必須）
+- 脈拍・体重・気分・体調・メモ（任意）
+- 測定日時の変更も可能
+
+<p align="center">
+  <img src="docs/images/02_record_recent.png" alt="直近の記録" width="300">
+</p>
+
+> JSH2019 家庭血圧基準に基づき、記録ごとに血圧分類（正常血圧〜III度高血圧）が自動表示されます。
+
+---
+
+### 📊 見やすいグラフ
+
+血圧の推移を折れ線グラフで一目確認。7日・30日・90日・全期間の切り替えが可能です。
+
+<p align="center">
+  <img src="docs/images/03_chart_continuous.png" alt="連続グラフ" width="300">
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/images/04_chart_daynight.png" alt="日中・夜間グラフ" width="300">
+</p>
+
+**2つの表示モード:**
+
+| モード | 特徴 |
+|--------|------|
+| **連続** | 全データを1本の線で時系列表示（従来型） |
+| **日中・夜間** | 日中と夜間のデータを色分け表示。時間帯区切りはカスタマイズ可能 |
+
+家庭血圧の基準線（135/85 mmHg）が常にグラフ上に表示されるので、自分の血圧がどの位置にあるか直感的に把握できます。
+
+---
+
+### 📈 統計情報
+
+選択期間の平均値と記録数が自動計算されます。
+
+<p align="center">
+  <img src="docs/images/05_chart_stats.png" alt="統計情報" width="300">
+</p>
+
+---
+
+### 🤖 AI健康アドバイス
+
+OpenAI APIキーを設定すると、あなたの血圧データに基づいたAI健康アドバイスを受けられます。
+
+- 血圧の傾向分析
+- 食事・運動・生活習慣に関する実践的なアドバイス
+- チャット形式で追加の質問も可能
+
+<p align="center">
+  <img src="docs/images/10_settings_ai.png" alt="AI設定" width="300">
+</p>
+
+> ※ AI診断は医療行為ではありません。参考情報としてご利用ください。
+
+---
+
+### 📱 スマートフォン最適化 & PWA対応
+
+スマートフォンのホーム画面に追加すれば、ネイティブアプリのように利用できます。
+
+- **完全オフライン動作** — インターネット接続なしでも記録・閲覧可能
+- **ホーム画面アイコン** — ワンタップで起動
+- **バッジ通知** — 当日の記録がまだない場合、アイコンにバッジを表示（Chrome/Edge）
+- **自動更新** — 新バージョンが利用可能になると自動通知
+
+---
+
+### 💾 データのバックアップ
+
+JSON形式でエクスポート/インポートに対応。端末の買い替え時もデータを簡単に移行できます。
+
+<p align="center">
+  <img src="docs/images/07_settings_data.png" alt="データ管理" width="300">
+</p>
+
+---
+
+### ✏️ 記録の編集・管理
+
+過去の記録はいつでも編集・削除可能。履歴タブでは日付フィルタで期間を絞り込めます。
+
+<p align="center">
+  <img src="docs/images/11_edit_dialog.png" alt="編集画面" width="300">
+</p>
+
+---
+
+## 使い方
+
+### ステップ 1: アクセス
+
+ブラウザで以下のURLにアクセスするだけ。アカウント登録は不要です。
+
+👉 **https://sbpr-three.vercel.app/**
+
+### ステップ 2: 記録する
+
+血圧値を入力して「記録を保存」をタップ。
+
+### ステップ 3: 確認する
+
+グラフタブで推移を確認。統計情報で平均値をチェック。
+
+### (オプション) ホーム画面に追加
+
+- **iPhone**: Safari → 共有ボタン → 「ホーム画面に追加」
+- **Android**: Chrome → メニュー → 「ホーム画面に追加」
+
+---
+
+## プライバシーへのこだわり
+
+| 項目 | 内容 |
+|------|------|
+| データ保存先 | 端末内のブラウザ（IndexedDB） |
+| サーバー送信 | 一切なし（AI診断利用時のみOpenAI APIへ送信） |
+| アカウント | 不要 |
+| トラッキング | なし |
+| 広告 | なし |
+
+あなたの健康データは、あなたの端末だけにあります。
+
+---
+
+## 対応環境
+
+| 環境 | 対応状況 |
+|------|----------|
+| Chrome (Android/PC) | ✅ 全機能対応 |
+| Safari (iPhone/iPad) | ✅ 全機能対応 |
+| Edge (PC) | ✅ 全機能対応 |
+| Firefox | ✅ 対応（一部PWA機能を除く） |
+
+---
+
+## 技術情報
+
+開発者向けの技術情報です。
 
 | 項目 | 技術 |
 |------|------|
-| フロントエンド | HTML + vanilla JavaScript (SPA) |
+| フロントエンド | HTML + vanilla JavaScript（SPA、フレームワーク不使用） |
 | スタイル | CSS（ビルドツール不使用） |
 | データストア | IndexedDB |
 | グラフ描画 | [Chart.js](https://www.chartjs.org/) v4 |
 | PWA | Web App Manifest + Service Worker |
 | テスト | Jest + Puppeteer |
-| コンテナ | Docker (nginx:alpine / node:alpine) |
+| コンテナ | Docker（nginx:alpine / node:alpine） |
 | デプロイ | Vercel |
 
-## ディレクトリ構成
-
-```
-sbpr/
-├── local_app/              # アプリ本体（HTML + vanilla JS）
-│   ├── index.html          # SPA エントリポイント
-│   ├── style.css           # スタイルシート
-│   ├── script.js           # メインロジック（IndexedDB・UI・グラフ・PWA）
-│   ├── bp.calc.js          # 計算ロジック（純粋関数）
-│   ├── bp.calc.test.js     # 単体テスト
-│   ├── e2e.test.js         # E2Eテスト（Puppeteer）
-│   ├── version.js          # ビルド時自動生成
-│   ├── manifest.json       # PWA Web App Manifest
-│   ├── sw.js               # PWA Service Worker
-│   └── icons/              # PWA アイコン
-│       ├── icon-192.svg    # 192x192 アイコン
-│       ├── icon-512.svg    # 512x512 アイコン
-│       └── icon-maskable.svg # マスカブルアイコン
-├── api/                    # Vercel Serverless Functions
-│   ├── openai.js           # OpenAI reverse proxy (query param方式)
-│   └── openai/[...path].js # OpenAI reverse proxy (catch-all, fallback)
-├── docs/                   # ドキュメント駆動開発用
-│   ├── requirements_definition.md
-│   ├── basic_design.md
-│   ├── detailed_design.md
-│   ├── algorithm_logic.md
-│   ├── test_specification.md
-│   └── test_expected.md
-├── scripts/
-│   ├── build.sh            # ビルド＆起動
-│   ├── rebuild.sh          # クリーンビルド＆起動
-│   └── generate_version.sh # バージョン情報生成
-├── nginx/
-│   └── default.conf        # ローカル開発用nginx設定
-├── docker-compose.yml      # 3サービス構成
-├── Dockerfile              # nginx:alpine（アプリ配信）
-├── Dockerfile.test         # node:alpine + Chromium（テスト実行）
-├── package.json            # Jest + Puppeteer
-└── vercel.json             # Vercelデプロイ設定
-```
-
-## セットアップ
-
-### 前提条件
-
-- Docker / Docker Compose
-
-### ビルド＆起動
+### ローカル開発
 
 ```bash
+# Docker でビルド＆起動
 ./scripts/build.sh
+
+# ブラウザで http://localhost:8082 にアクセス
 ```
 
-ブラウザで `http://localhost:8082` にアクセスしてください。
-
-### クリーンビルド
-
-```bash
-./scripts/rebuild.sh
-```
-
-## テスト
-
-Docker コンテナ上でテストを実行します。
+### テスト実行
 
 ```bash
 docker compose run --rm sbpr-test npm test
 ```
 
-- **単体テスト**: `bp.calc.test.js` — 血圧分類・統計計算・バリデーション
-- **E2Eテスト**: `e2e.test.js` — ページ表示・記録操作・タブ切替・スクロール機能・pageerror検知
+---
 
-## Docker構成（3サービス体制）
+## ドキュメント
 
-| サービス | 用途 | ポート |
-|----------|------|--------|
-| `sbpr-app` | テスト/E2E用（内部ネットワークのみ） | 非公開 |
-| `sbpr-app-public` | ブラウザ確認用 | 8082 (変更可) |
-| `sbpr-test` | テスト実行（Node.js + Chromium） | — |
+- [ユーザーマニュアル](docs/manual.md) — 全機能の操作ガイド（スクリーンショット付き）
+- [要件定義書](docs/requirements_definition.md)
+- [基本設計書](docs/basic_design.md)
+- [詳細設計書](docs/detailed_design.md)
+- [テスト仕様書](docs/test_specification.md)
 
-## PWA（Progressive Web App）
+---
 
-本アプリはPWA対応しており、スマートフォンにネイティブアプリのようにインストールできます。
-
-### インストール方法
-
-**Android (Chrome)**:
-1. ブラウザでアプリを開く
-2. メニュー（⋮）→「ホーム画面に追加」をタップ
-3. ホーム画面のアイコンからフルスクリーンで起動
-
-**iOS (Safari)**:
-1. Safari でアプリを開く
-2. 共有ボタン（□↑）→「ホーム画面に追加」をタップ
-3. ホーム画面のアイコンからフルスクリーンで起動
-
-### PWA機能一覧
-
-| 機能 | 説明 |
-|------|------|
-| ホーム画面インストール | ネイティブアプリのようにアイコンから起動 |
-| 完全オフライン動作 | Service Worker によりネットワーク不要で動作 |
-| テーマカラー / スプラッシュ | 起動時にブランドカラーのスプラッシュ表示 |
-| バッジ表示 | 当日未記録時にアイコンにバッジ表示（Chrome/Edge） |
-| 自動更新チェック | フォアグラウンド復帰時にSW更新を自動チェック（iOS対応） |
-| 更新バナー | 新バージョン検出時にヘッダー下にバナー表示、タップで即更新 |
-| 手動更新確認 | 設定タブの「更新を確認」ボタンで手動チェック可能 |
-
-## ライセンス
-
-Private
+<p align="center">
+  <br>
+  <a href="https://sbpr-three.vercel.app/"><strong>💓 シンプル血圧記録を使ってみる →</strong></a>
+  <br><br>
+  毎日の血圧管理を、もっとシンプルに。
+</p>
