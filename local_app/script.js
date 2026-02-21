@@ -730,6 +730,11 @@ function updateChartContinuous(ctx, records) {
     const systolicData = records.map(r => r.systolic);
     const diastolicData = records.map(r => r.diastolic);
     const pulseData = records.map(r => r.pulse);
+    const pointRadiusWithMemo = 6;
+    const pointRadiusDefault = 3;
+    const pointRadiusPulseDefault = 2;
+    const pointRadius = records.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusDefault));
+    const pointRadiusPulse = records.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusPulseDefault));
 
     bpChart = new Chart(ctx, {
         type: 'line',
@@ -742,7 +747,7 @@ function updateChartContinuous(ctx, records) {
                     borderColor: '#dc2626',
                     backgroundColor: 'rgba(220, 38, 38, 0.1)',
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: pointRadius,
                     pointBackgroundColor: '#dc2626',
                     tension: 0.3,
                     fill: false
@@ -753,7 +758,7 @@ function updateChartContinuous(ctx, records) {
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: pointRadius,
                     pointBackgroundColor: '#2563eb',
                     tension: 0.3,
                     fill: false
@@ -764,7 +769,7 @@ function updateChartContinuous(ctx, records) {
                     borderColor: '#16a34a',
                     backgroundColor: 'rgba(22, 163, 74, 0.1)',
                     borderWidth: 1.5,
-                    pointRadius: 2,
+                    pointRadius: pointRadiusPulse,
                     pointBackgroundColor: '#16a34a',
                     borderDash: [4, 4],
                     tension: 0.3,
@@ -792,6 +797,16 @@ function updateChartContinuous(ctx, records) {
                                 return formatDateTime(items[0].parsed.x);
                             }
                             return '';
+                        },
+                        afterBody: function(items) {
+                            if (items.length > 0) {
+                                const idx = items[0].dataIndex;
+                                const memo = records[idx] && records[idx].memo;
+                                if (memo) {
+                                    return ['', 'メモ: ' + memo];
+                                }
+                            }
+                            return [];
                         }
                     }
                 }
@@ -842,6 +857,11 @@ function updateChartDayNight(ctx, records) {
     const nightRecords = records.filter(r => !isDaytime(r.measuredAt));
 
     const toXY = (recs, field) => recs.map(r => ({ x: new Date(r.measuredAt), y: r[field] }));
+    const pointR = (recs, pulse) => recs.map(r => (r.memo ? 6 : (pulse ? 2 : 3)));
+    const dayPointR = pointR(dayRecords, false);
+    const dayPointRPulse = pointR(dayRecords, true);
+    const nightPointR = pointR(nightRecords, false);
+    const nightPointRPulse = pointR(nightRecords, true);
 
     bpChart = new Chart(ctx, {
         type: 'line',
@@ -853,7 +873,7 @@ function updateChartDayNight(ctx, records) {
                     borderColor: '#dc2626',
                     backgroundColor: 'rgba(220, 38, 38, 0.1)',
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: dayPointR,
                     pointBackgroundColor: '#dc2626',
                     tension: 0.3,
                     fill: false
@@ -864,7 +884,7 @@ function updateChartDayNight(ctx, records) {
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: dayPointR,
                     pointBackgroundColor: '#2563eb',
                     tension: 0.3,
                     fill: false
@@ -875,7 +895,7 @@ function updateChartDayNight(ctx, records) {
                     borderColor: '#16a34a',
                     backgroundColor: 'rgba(22, 163, 74, 0.1)',
                     borderWidth: 1.5,
-                    pointRadius: 2,
+                    pointRadius: dayPointRPulse,
                     pointBackgroundColor: '#16a34a',
                     borderDash: [4, 4],
                     tension: 0.3,
@@ -888,7 +908,7 @@ function updateChartDayNight(ctx, records) {
                     borderColor: '#f87171',
                     backgroundColor: 'rgba(248, 113, 113, 0.1)',
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: nightPointR,
                     pointBackgroundColor: '#f87171',
                     borderDash: [6, 3],
                     tension: 0.3,
@@ -900,7 +920,7 @@ function updateChartDayNight(ctx, records) {
                     borderColor: '#60a5fa',
                     backgroundColor: 'rgba(96, 165, 250, 0.1)',
                     borderWidth: 2,
-                    pointRadius: 3,
+                    pointRadius: nightPointR,
                     pointBackgroundColor: '#60a5fa',
                     borderDash: [6, 3],
                     tension: 0.3,
@@ -912,7 +932,7 @@ function updateChartDayNight(ctx, records) {
                     borderColor: '#4ade80',
                     backgroundColor: 'rgba(74, 222, 128, 0.1)',
                     borderWidth: 1.5,
-                    pointRadius: 2,
+                    pointRadius: nightPointRPulse,
                     pointBackgroundColor: '#4ade80',
                     borderDash: [4, 4, 1, 4],
                     tension: 0.3,
@@ -940,6 +960,19 @@ function updateChartDayNight(ctx, records) {
                                 return formatDateTime(items[0].parsed.x);
                             }
                             return '';
+                        },
+                        afterBody: function(items) {
+                            if (items.length > 0) {
+                                const dsIdx = items[0].datasetIndex;
+                                const dataIdx = items[0].dataIndex;
+                                const recs = dsIdx < 3 ? dayRecords : nightRecords;
+                                const rec = recs[dataIdx];
+                                const memo = rec && rec.memo;
+                                if (memo) {
+                                    return ['', 'メモ: ' + memo];
+                                }
+                            }
+                            return [];
                         }
                     }
                 }
