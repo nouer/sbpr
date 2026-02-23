@@ -17,6 +17,11 @@
 
 ### 1.3 バリデーション
 * validateBPInput({systolic:120, diastolic:80}) → { valid: true }
+* isBPRecord({systolic:120, diastolic:80}) → true
+* isBPRecord({noMedication:true, systolic:null, diastolic:null}) → false
+* isNoMedicationRecord({noMedication:true}) → true
+* validateNoMedicationDate('2026-02-15') → { valid: true }
+* validateNoMedicationDate('') → { valid: false }
 * validateBPInput({systolic:40, diastolic:80}) → { valid: false, error: "..." }
 * validateBPInput({systolic:80, diastolic:80}) → { valid: false, error: "..." }
 * validateBPInput({systolic:120, diastolic:80, weight:65.5}) → { valid: true }
@@ -28,6 +33,8 @@
 ### 2.1 基本操作
 * ページタイトル: "シンプル血圧記録 - sbpr"
 * 血圧入力後、記録一覧に新しいレコードが表示される
+* 記録保存成功時、「記録を保存」ボタン直下に「記録を保存しました」が表示され、ボタンが一時「保存しました」に変わる
+* 服薬なしで保存成功時、「服薬なしで保存」ボタン直下に「服薬なしの記録を保存しました」が表示され、ボタンが一時「保存しました」に変わる
 * グラフタブでChart.jsキャンバスが描画される
 * 全操作中にpageerrorが発生しない
 * 気分・体調・体重入力後、記録一覧に新フィールドが表示される

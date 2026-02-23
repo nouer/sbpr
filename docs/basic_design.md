@@ -49,6 +49,7 @@ sbpr/
 }
 ```
 
+* **noMedication**: （オプション）`true` のとき「服薬しなかった日」として扱う。この場合 systolic/diastolic は null。
 * **mood**: 気分（1=悪い, 2=普通, 3=良い, null=未選択）
 * **condition**: 体調（1=悪い, 2=普通, 3=良い, null=未選択）
 * **weight**: 体重（kg, 20.0〜300.0, 小数点1桁まで, null=未選択）

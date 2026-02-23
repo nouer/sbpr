@@ -89,6 +89,43 @@ function validateBPInput(input) {
 }
 
 /**
+ * 血圧記録かどうか（グラフ・統計の対象とするか）
+ * @param {object} r - レコード
+ * @returns {boolean}
+ */
+function isBPRecord(r) {
+    return !!(r && !r.noMedication && r.systolic != null && r.diastolic != null);
+}
+
+/**
+ * 服薬なし記録かどうか
+ * @param {object} r - レコード
+ * @returns {boolean}
+ */
+function isNoMedicationRecord(r) {
+    return !!(r && r.noMedication === true);
+}
+
+/**
+ * 服薬なし記録用のバリデーション（日付が有効か）
+ * @param {string} dateStr - YYYY-MM-DD 形式
+ * @returns {object} { valid: boolean, errors: string[] }
+ */
+function validateNoMedicationDate(dateStr) {
+    const errors = [];
+    if (!dateStr || dateStr.trim() === '') {
+        errors.push('日付を選択してください');
+        return { valid: false, errors };
+    }
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+        errors.push('有効な日付を選択してください');
+        return { valid: false, errors };
+    }
+    return { valid: true, errors: [] };
+}
+
+/**
  * レコード配列から平均値を計算
  * @param {Array} records - { systolic, diastolic, pulse? } の配列
  * @returns {object|null} { avgSystolic, avgDiastolic, avgPulse } or null
@@ -191,6 +228,9 @@ if (typeof module !== 'undefined' && module.exports) {
         classifyBP,
         classifyBPClass,
         validateBPInput,
+        isBPRecord,
+        isNoMedicationRecord,
+        validateNoMedicationDate,
         calcAverage,
         calcMinMax,
         generateId,

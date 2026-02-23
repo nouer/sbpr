@@ -138,6 +138,9 @@ let currentChartMode = 'continuous';
 
 const LS_KEY_DAY_START = 'sbpr_day_start_hour';
 const LS_KEY_NIGHT_START = 'sbpr_night_start_hour';
+const LS_KEY_LAST_EXPORT_AT = 'sbpr_last_export_at';
+const LS_KEY_EXPORT_REMINDER_DAYS = 'sbpr_export_reminder_days';
+const LS_KEY_EXPORT_REMINDER_ENABLED = 'sbpr_export_reminder_enabled';
 
 function getDayStartHour() {
     const v = parseInt(localStorage.getItem(LS_KEY_DAY_START), 10);
@@ -147,6 +150,61 @@ function getDayStartHour() {
 function getNightStartHour() {
     const v = parseInt(localStorage.getItem(LS_KEY_NIGHT_START), 10);
     return isNaN(v) ? 18 : Math.max(0, Math.min(23, v));
+}
+
+/**
+ * 最終エクスポート日時をローカルストレージに保存
+ */
+function saveLastExportAt() {
+    try {
+        localStorage.setItem(LS_KEY_LAST_EXPORT_AT, new Date().toISOString());
+    } catch (e) { /* 無視 */ }
+}
+
+/**
+ * 最終エクスポート日時を取得（ISO文字列 or null）
+ * @returns {string|null}
+ */
+function getLastExportAt() {
+    return localStorage.getItem(LS_KEY_LAST_EXPORT_AT) || null;
+}
+
+/**
+ * エクスポート通知の間隔（日数）を取得
+ * @returns {number}
+ */
+function getExportReminderDays() {
+    const v = parseInt(localStorage.getItem(LS_KEY_EXPORT_REMINDER_DAYS), 10);
+    return (isNaN(v) || v < 1) ? 7 : Math.min(365, Math.max(1, v));
+}
+
+/**
+ * エクスポート通知が有効か
+ * @returns {boolean}
+ */
+function getExportReminderEnabled() {
+    const v = localStorage.getItem(LS_KEY_EXPORT_REMINDER_ENABLED);
+    return v !== '0' && v !== 'false';
+}
+
+/**
+ * エクスポート通知の有効/無効を保存
+ * @param {boolean} enabled
+ */
+function setExportReminderEnabled(enabled) {
+    try {
+        localStorage.setItem(LS_KEY_EXPORT_REMINDER_ENABLED, enabled ? '1' : '0');
+    } catch (e) { /* 無視 */ }
+}
+
+/**
+ * エクスポート通知の間隔（日数）を保存
+ * @param {number} days
+ */
+function setExportReminderDays(days) {
+    try {
+        localStorage.setItem(LS_KEY_EXPORT_REMINDER_DAYS, String(days));
+    } catch (e) { /* 無視 */ }
 }
 
 // ===== 3段階セレクタ ヘルパー =====
@@ -235,6 +293,7 @@ async function initApp() {
     initVersionInfo();
     initScrollToTop();
     initUpdateBanner();
+    initExportReminder();
     initTabs();
     initForm();
     initChartModeControls();
@@ -258,6 +317,7 @@ async function initApp() {
     await prefillFormWithLastRecord();
     await registerServiceWorker();
     await updateAppBadge();
+    checkExportReminder();
     document.body.dataset.appReady = 'true';
 }
 
@@ -345,6 +405,11 @@ function initForm() {
         e.preventDefault();
         await saveRecord();
     });
+
+    const saveNoMedicationBtn = document.getElementById('save-no-medication-btn');
+    if (saveNoMedicationBtn) {
+        saveNoMedicationBtn.addEventListener('click', saveNoMedicationRecord);
+    }
 }
 
 /**
@@ -409,14 +474,17 @@ function initSelectOnFocus() {
  * @param {string} elementId
  * @param {string} text
  * @param {string} type - 'success' | 'error' | 'info'
+ * @param {number} [durationMs] - 表示時間（ミリ秒）。未指定時は success なら 5000、それ以外 3000
  */
-function showMessage(elementId, text, type) {
+function showMessage(elementId, text, type, durationMs) {
     const el = document.getElementById(elementId);
+    if (!el) return;
     el.textContent = text;
     el.className = `message show ${type}`;
+    const duration = durationMs != null ? durationMs : (type === 'success' ? 5000 : 3000);
     setTimeout(() => {
         el.classList.remove('show');
-    }, 3000);
+    }, duration);
 }
 
 /**
@@ -444,6 +512,11 @@ async function saveRecord() {
         return;
     }
 
+    const saveBtn = document.getElementById('save-btn');
+    const originalLabel = saveBtn.textContent;
+    saveBtn.textContent = '保存中...';
+    saveBtn.disabled = true;
+
     const now = new Date().toISOString();
     const record = {
         id: generateId(),
@@ -467,8 +540,90 @@ async function saveRecord() {
         await refreshAll();
         await prefillFormWithLastRecord();
         await updateAppBadge();
+
+        saveBtn.textContent = '保存しました';
+        setTimeout(() => {
+            saveBtn.textContent = originalLabel;
+            saveBtn.disabled = false;
+        }, 1500);
     } catch (error) {
         showMessage('record-message', '保存に失敗しました: ' + error.message, 'error');
+        saveBtn.textContent = originalLabel;
+        saveBtn.disabled = false;
+    }
+}
+
+/**
+ * 服薬しなかった日を保存（血圧入力なし）
+ */
+async function saveNoMedicationRecord() {
+    const dateInput = document.getElementById('no-medication-date');
+    const memoInput = document.getElementById('no-medication-memo');
+    const dateStr = dateInput ? dateInput.value.trim() : '';
+    const memo = memoInput ? memoInput.value.trim() : null;
+
+    const validation = validateNoMedicationDate(dateStr);
+    if (!validation.valid) {
+        showMessage('no-medication-message', validation.errors[0], 'error');
+        return;
+    }
+
+    const selectedDate = new Date(dateStr);
+    const measuredAt = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 12, 0, 0).toISOString();
+    const dateOnly = dateStr;
+
+    const allRecords = await getAllRecords();
+    const existingSameDay = allRecords.find(r => {
+        if (!isNoMedicationRecord(r)) return false;
+        const d = new Date(r.measuredAt);
+        const rDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return rDate === dateOnly;
+    });
+    if (existingSameDay) {
+        showMessage('no-medication-message', 'この日付は既に服薬なしで記録済みです', 'error');
+        return;
+    }
+
+    const now = new Date().toISOString();
+    const record = {
+        id: generateId(),
+        measuredAt: measuredAt,
+        noMedication: true,
+        systolic: null,
+        diastolic: null,
+        pulse: null,
+        weight: null,
+        mood: null,
+        condition: null,
+        memo: memo || null,
+        createdAt: now,
+        updatedAt: now
+    };
+
+    const noMedBtn = document.getElementById('save-no-medication-btn');
+    const noMedOriginalLabel = noMedBtn.textContent;
+    noMedBtn.textContent = '保存中...';
+    noMedBtn.disabled = true;
+
+    try {
+        await addRecord(record);
+        showMessage('no-medication-message', '服薬なしの記録を保存しました', 'success');
+        if (dateInput) dateInput.value = '';
+        if (memoInput) memoInput.value = '';
+        await refreshAll();
+        await refreshHistory();
+        await refreshChart();
+        await updateAppBadge();
+
+        noMedBtn.textContent = '保存しました';
+        setTimeout(() => {
+            noMedBtn.textContent = noMedOriginalLabel;
+            noMedBtn.disabled = false;
+        }, 1500);
+    } catch (error) {
+        showMessage('no-medication-message', '保存に失敗しました: ' + error.message, 'error');
+        noMedBtn.textContent = noMedOriginalLabel;
+        noMedBtn.disabled = false;
     }
 }
 
@@ -501,11 +656,27 @@ async function refreshRecentRecords() {
  * @returns {string}
  */
 function renderRecordItem(r) {
+    const memoText = r.memo ? `<div class="memo">${escapeHtml(r.memo)}</div>` : '';
+
+    if (isNoMedicationRecord(r)) {
+        return `<li class="record-item record-item-no-medication" data-id="${r.id}">
+            <div class="record-bp-values">
+                <span class="no-medication-label">服薬なし</span>
+            </div>
+            <div class="record-meta">
+                <div class="datetime">${formatDateTime(r.measuredAt)}</div>
+                ${memoText}
+            </div>
+            <div class="record-actions">
+                <button class="edit-btn" onclick="openEditDialog('${r.id}')" title="編集">✏️</button>
+                <button class="delete-btn" onclick="confirmDeleteRecord('${r.id}')" title="削除">✕</button>
+            </div>
+        </li>`;
+    }
+
     const cls = classifyBP(r.systolic, r.diastolic);
     const clsClass = classifyBPClass(cls);
     const pulseText = r.pulse != null ? `脈拍 ${r.pulse} bpm` : '';
-    const memoText = r.memo ? `<div class="memo">${escapeHtml(r.memo)}</div>` : '';
-
     const extraParts = [];
     if (r.weight != null) extraParts.push(`<span>体重 ${r.weight}kg</span>`);
     if (r.mood != null) extraParts.push(`<span>気分 ${moodLabel(r.mood)}</span>`);
@@ -582,10 +753,14 @@ async function openEditDialog(id) {
     const record = await getRecord(id);
     if (!record) return;
 
+    const isNoMed = isNoMedicationRecord(record);
+    const bpFields = document.getElementById('edit-bp-fields');
+    if (bpFields) bpFields.style.display = isNoMed ? 'none' : '';
+
     document.getElementById('edit-id').value = record.id;
     document.getElementById('edit-datetime').value = formatDateTimeLocal(new Date(record.measuredAt));
-    document.getElementById('edit-systolic').value = record.systolic;
-    document.getElementById('edit-diastolic').value = record.diastolic;
+    document.getElementById('edit-systolic').value = record.systolic ?? '';
+    document.getElementById('edit-diastolic').value = record.diastolic ?? '';
     document.getElementById('edit-pulse').value = record.pulse || '';
     document.getElementById('edit-weight').value = record.weight != null ? record.weight : '';
     document.getElementById('edit-memo').value = record.memo || '';
@@ -600,12 +775,35 @@ function closeEditDialog() {
 
 async function saveEditRecord() {
     const id = document.getElementById('edit-id').value;
+    const original = await getRecord(id);
+    if (!original) return;
+
+    const memo = document.getElementById('edit-memo').value.trim();
+    const datetime = document.getElementById('edit-datetime').value;
+
+    if (isNoMedicationRecord(original)) {
+        const updated = {
+            ...original,
+            measuredAt: datetime ? new Date(datetime).toISOString() : original.measuredAt,
+            memo: memo || null,
+            updatedAt: new Date().toISOString()
+        };
+        try {
+            await updateRecord(updated);
+            closeEditDialog();
+            await refreshAll();
+            await refreshHistory();
+            await refreshChart();
+        } catch (error) {
+            alert('更新に失敗しました: ' + error.message);
+        }
+        return;
+    }
+
     const systolic = document.getElementById('edit-systolic').value;
     const diastolic = document.getElementById('edit-diastolic').value;
     const pulse = document.getElementById('edit-pulse').value;
     const weight = document.getElementById('edit-weight').value;
-    const memo = document.getElementById('edit-memo').value.trim();
-    const datetime = document.getElementById('edit-datetime').value;
     const mood = getLevelValue('edit-mood');
     const condition = getLevelValue('edit-condition');
 
@@ -620,9 +818,6 @@ async function saveEditRecord() {
         alert(validation.errors[0]);
         return;
     }
-
-    const original = await getRecord(id);
-    if (!original) return;
 
     const updated = {
         ...original,
@@ -706,8 +901,9 @@ async function refreshChart() {
         records = records.filter(r => new Date(r.measuredAt) >= cutoff);
     }
 
+    const bpRecords = records.filter(r => isBPRecord(r));
     updateChart(records);
-    updateStats(records);
+    updateStats(bpRecords);
 }
 
 function updateChart(records) {
@@ -726,57 +922,77 @@ function updateChart(records) {
 }
 
 function updateChartContinuous(ctx, records) {
-    const labels = records.map(r => new Date(r.measuredAt));
-    const systolicData = records.map(r => r.systolic);
-    const diastolicData = records.map(r => r.diastolic);
-    const pulseData = records.map(r => r.pulse);
+    const bpRecords = records.filter(r => isBPRecord(r));
+    const noMedicationRecords = records.filter(r => isNoMedicationRecord(r));
+
+    const labels = bpRecords.map(r => new Date(r.measuredAt));
+    const systolicData = bpRecords.map(r => r.systolic);
+    const diastolicData = bpRecords.map(r => r.diastolic);
+    const pulseData = bpRecords.map(r => r.pulse);
     const pointRadiusWithMemo = 6;
     const pointRadiusDefault = 3;
     const pointRadiusPulseDefault = 2;
-    const pointRadius = records.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusDefault));
-    const pointRadiusPulse = records.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusPulseDefault));
+    const pointRadius = bpRecords.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusDefault));
+    const pointRadiusPulse = bpRecords.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusPulseDefault));
+
+    const noMedicationData = noMedicationRecords.map(r => ({ x: new Date(r.measuredAt), y: 50 }));
+
+    const datasets = [
+        {
+            label: '最高血圧 (mmHg)',
+            data: systolicData,
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            borderWidth: 2,
+            pointRadius: pointRadius,
+            pointBackgroundColor: '#dc2626',
+            tension: 0.3,
+            fill: false
+        },
+        {
+            label: '最低血圧 (mmHg)',
+            data: diastolicData,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderWidth: 2,
+            pointRadius: pointRadius,
+            pointBackgroundColor: '#2563eb',
+            tension: 0.3,
+            fill: false
+        },
+        {
+            label: '脈拍 (bpm)',
+            data: pulseData,
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+            borderWidth: 1.5,
+            pointRadius: pointRadiusPulse,
+            pointBackgroundColor: '#16a34a',
+            borderDash: [4, 4],
+            tension: 0.3,
+            fill: false,
+            yAxisID: 'y1'
+        }
+    ];
+
+    if (noMedicationData.length > 0) {
+        datasets.push({
+            label: '服薬なし',
+            data: noMedicationData,
+            showLine: false,
+            pointStyle: 'triangle',
+            pointRadius: 8,
+            pointBackgroundColor: '#f59e0b',
+            borderColor: '#f59e0b',
+            yAxisID: 'y'
+        });
+    }
 
     bpChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
-            datasets: [
-                {
-                    label: '最高血圧 (mmHg)',
-                    data: systolicData,
-                    borderColor: '#dc2626',
-                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: pointRadius,
-                    pointBackgroundColor: '#dc2626',
-                    tension: 0.3,
-                    fill: false
-                },
-                {
-                    label: '最低血圧 (mmHg)',
-                    data: diastolicData,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: pointRadius,
-                    pointBackgroundColor: '#2563eb',
-                    tension: 0.3,
-                    fill: false
-                },
-                {
-                    label: '脈拍 (bpm)',
-                    data: pulseData,
-                    borderColor: '#16a34a',
-                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                    borderWidth: 1.5,
-                    pointRadius: pointRadiusPulse,
-                    pointBackgroundColor: '#16a34a',
-                    borderDash: [4, 4],
-                    tension: 0.3,
-                    fill: false,
-                    yAxisID: 'y1'
-                }
-            ]
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -800,10 +1016,10 @@ function updateChartContinuous(ctx, records) {
                         },
                         afterBody: function(items) {
                             if (items.length > 0) {
+                                const datasetIndex = items[0].datasetIndex;
                                 const idx = items[0].dataIndex;
-                                const memo = records[idx] && records[idx].memo;
-                                if (memo) {
-                                    return ['', 'メモ: ' + memo];
+                                if (datasetIndex < 3 && bpRecords[idx] && bpRecords[idx].memo) {
+                                    return ['', 'メモ: ' + bpRecords[idx].memo];
                                 }
                             }
                             return [];
@@ -853,8 +1069,10 @@ function isDaytime(dateStr) {
 }
 
 function updateChartDayNight(ctx, records) {
-    const dayRecords = records.filter(r => isDaytime(r.measuredAt));
-    const nightRecords = records.filter(r => !isDaytime(r.measuredAt));
+    const dayRecords = records.filter(r => isDaytime(r.measuredAt) && isBPRecord(r));
+    const nightRecords = records.filter(r => !isDaytime(r.measuredAt) && isBPRecord(r));
+    const noMedicationRecords = records.filter(r => isNoMedicationRecord(r));
+    const noMedicationData = noMedicationRecords.map(r => ({ x: new Date(r.measuredAt), y: 50 }));
 
     const toXY = (recs, field) => recs.map(r => ({ x: new Date(r.measuredAt), y: r[field] }));
     const pointR = (recs, pulse) => recs.map(r => (r.memo ? 6 : (pulse ? 2 : 3)));
@@ -863,21 +1081,18 @@ function updateChartDayNight(ctx, records) {
     const nightPointR = pointR(nightRecords, false);
     const nightPointRPulse = pointR(nightRecords, true);
 
-    bpChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            datasets: [
-                {
-                    label: '日中 最高 (mmHg)',
-                    data: toXY(dayRecords, 'systolic'),
-                    borderColor: '#dc2626',
-                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: dayPointR,
-                    pointBackgroundColor: '#dc2626',
-                    tension: 0.3,
-                    fill: false
-                },
+    const datasets = [
+        {
+            label: '日中 最高 (mmHg)',
+            data: toXY(dayRecords, 'systolic'),
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            borderWidth: 2,
+            pointRadius: dayPointR,
+            pointBackgroundColor: '#dc2626',
+            tension: 0.3,
+            fill: false
+        },
                 {
                     label: '日中 最低 (mmHg)',
                     data: toXY(dayRecords, 'diastolic'),
@@ -939,7 +1154,24 @@ function updateChartDayNight(ctx, records) {
                     fill: false,
                     yAxisID: 'y1'
                 }
-            ]
+            ];
+    if (noMedicationData.length > 0) {
+        datasets.push({
+            label: '服薬なし',
+            data: noMedicationData,
+            showLine: false,
+            pointStyle: 'triangle',
+            pointRadius: 8,
+            pointBackgroundColor: '#f59e0b',
+            borderColor: '#f59e0b',
+            yAxisID: 'y'
+        });
+    }
+
+    bpChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -965,9 +1197,14 @@ function updateChartDayNight(ctx, records) {
                             if (items.length > 0) {
                                 const dsIdx = items[0].datasetIndex;
                                 const dataIdx = items[0].dataIndex;
-                                const recs = dsIdx < 3 ? dayRecords : nightRecords;
-                                const rec = recs[dataIdx];
-                                const memo = rec && rec.memo;
+                                let memo = null;
+                                if (dsIdx >= 6 && noMedicationRecords[dataIdx]) {
+                                    memo = noMedicationRecords[dataIdx].memo;
+                                } else {
+                                    const recs = dsIdx < 3 ? dayRecords : nightRecords;
+                                    const rec = recs[dataIdx];
+                                    memo = rec && rec.memo;
+                                }
                                 if (memo) {
                                     return ['', 'メモ: ' + memo];
                                 }
@@ -1053,6 +1290,11 @@ function updateStats(records) {
         el('stat-avg-pulse', '---');
     }
     el('stat-count', records.length);
+}
+
+/** 血圧記録のみに絞り込む（グラフ・統計用） */
+function filterBPRecords(records) {
+    return (records || []).filter(r => isBPRecord(r));
 }
 
 // ===== 履歴 =====
@@ -1162,6 +1404,7 @@ async function exportData() {
         a.click();
         URL.revokeObjectURL(url);
 
+        saveLastExportAt();
         showMessage('settings-message', `${records.length}件のデータをエクスポートしました`, 'success');
     } catch (error) {
         showMessage('settings-message', 'エクスポートに失敗しました: ' + error.message, 'error');
@@ -1189,24 +1432,43 @@ async function importData(event) {
 
         let importedCount = 0;
         for (const record of data.records) {
-            if (!record.id || !record.systolic || !record.diastolic) continue;
-
+            if (!record.id) continue;
             if (existingIds.has(record.id)) continue;
 
-            await addRecord({
-                id: record.id,
-                measuredAt: record.measuredAt || new Date().toISOString(),
-                systolic: Number(record.systolic),
-                diastolic: Number(record.diastolic),
-                pulse: record.pulse != null ? Number(record.pulse) : null,
-                weight: record.weight != null ? Number(record.weight) : null,
-                mood: record.mood != null ? Number(record.mood) : null,
-                condition: record.condition != null ? Number(record.condition) : null,
-                memo: record.memo || null,
-                createdAt: record.createdAt || new Date().toISOString(),
-                updatedAt: record.updatedAt || new Date().toISOString()
-            });
-            importedCount++;
+            if (record.noMedication === true) {
+                if (!record.measuredAt) continue;
+                await addRecord({
+                    id: record.id,
+                    measuredAt: record.measuredAt || new Date().toISOString(),
+                    noMedication: true,
+                    systolic: null,
+                    diastolic: null,
+                    pulse: null,
+                    weight: null,
+                    mood: null,
+                    condition: null,
+                    memo: record.memo || null,
+                    createdAt: record.createdAt || new Date().toISOString(),
+                    updatedAt: record.updatedAt || new Date().toISOString()
+                });
+                importedCount++;
+            } else {
+                if (!record.systolic || !record.diastolic) continue;
+                await addRecord({
+                    id: record.id,
+                    measuredAt: record.measuredAt || new Date().toISOString(),
+                    systolic: Number(record.systolic),
+                    diastolic: Number(record.diastolic),
+                    pulse: record.pulse != null ? Number(record.pulse) : null,
+                    weight: record.weight != null ? Number(record.weight) : null,
+                    mood: record.mood != null ? Number(record.mood) : null,
+                    condition: record.condition != null ? Number(record.condition) : null,
+                    memo: record.memo || null,
+                    createdAt: record.createdAt || new Date().toISOString(),
+                    updatedAt: record.updatedAt || new Date().toISOString()
+                });
+                importedCount++;
+            }
         }
 
         if (data.profile) {
@@ -1574,8 +1836,9 @@ function buildSystemPrompt() {
 
 async function buildDataSummary() {
     const records = await getAllRecords();
-    const avg = calcAverage(records);
-    const minMax = calcMinMax(records);
+    const bpRecords = filterBPRecords(records);
+    const avg = calcAverage(bpRecords);
+    const minMax = calcMinMax(bpRecords);
     const aiMemo = getAIMemo();
 
     let prompt = '';
@@ -1587,14 +1850,20 @@ async function buildDataSummary() {
         const displayRecords = records.slice(0, 50);
         for (const r of displayRecords) {
             const dt = formatDateTime(r.measuredAt);
-            const cls = classifyBP(r.systolic, r.diastolic);
-            let line = `${dt} | ${r.systolic}/${r.diastolic} mmHg (${cls})`;
-            if (r.pulse != null) line += ` | 脈拍 ${r.pulse} bpm`;
-            if (r.weight != null) line += ` | 体重 ${r.weight} kg`;
-            if (r.mood != null) line += ` | 気分: ${levelText(r.mood)}`;
-            if (r.condition != null) line += ` | 体調: ${levelText(r.condition)}`;
-            if (r.memo) line += ` | メモ: ${r.memo}`;
-            prompt += line + '\n';
+            if (isNoMedicationRecord(r)) {
+                let line = `${dt} | 服薬なし`;
+                if (r.memo) line += ` | メモ: ${r.memo}`;
+                prompt += line + '\n';
+            } else {
+                const cls = classifyBP(r.systolic, r.diastolic);
+                let line = `${dt} | ${r.systolic}/${r.diastolic} mmHg (${cls})`;
+                if (r.pulse != null) line += ` | 脈拍 ${r.pulse} bpm`;
+                if (r.weight != null) line += ` | 体重 ${r.weight} kg`;
+                if (r.mood != null) line += ` | 気分: ${levelText(r.mood)}`;
+                if (r.condition != null) line += ` | 体調: ${levelText(r.condition)}`;
+                if (r.memo) line += ` | メモ: ${r.memo}`;
+                prompt += line + '\n';
+            }
         }
         if (records.length > 50) {
             prompt += `（他 ${records.length - 50} 件省略）\n`;
@@ -1956,6 +2225,7 @@ async function registerServiceWorker() {
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 throttledUpdateCheck();
+                checkExportReminder();
             }
         });
 
@@ -2041,6 +2311,107 @@ function initUpdateBanner() {
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             hideUpdateBanner();
+        });
+    }
+}
+
+// ===== エクスポート通知バナー =====
+
+/**
+ * エクスポート通知が必要か判定し、必要ならバナーを表示する
+ */
+function checkExportReminder() {
+    if (!getExportReminderEnabled()) return;
+    const lastAt = getLastExportAt();
+    const days = getExportReminderDays();
+    const nowMs = Date.now();
+    if (!lastAt) {
+        showExportReminderBanner();
+        return;
+    }
+    const lastMs = new Date(lastAt).getTime();
+    const thresholdMs = days * 24 * 60 * 60 * 1000;
+    if (nowMs - lastMs > thresholdMs) {
+        showExportReminderBanner();
+    }
+}
+
+/**
+ * エクスポート通知バナーを表示（文言を間隔に合わせて更新）
+ */
+function showExportReminderBanner() {
+    const banner = document.getElementById('export-reminder-banner');
+    const textEl = document.getElementById('export-reminder-text');
+    if (!banner || !textEl) return;
+    const days = getExportReminderDays();
+    const lastAt = getLastExportAt();
+    if (lastAt) {
+        const d = new Date(lastAt);
+        const lastStr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+        textEl.textContent = `最終エクスポート: ${lastStr}。${days}日以上経過しています。バックアップのためエクスポートをお勧めします。`;
+    } else {
+        textEl.textContent = 'まだエクスポートしていません。バックアップのためエクスポートをお勧めします。';
+    }
+    const dontShow = document.getElementById('export-reminder-dont-show');
+    if (dontShow) dontShow.checked = false;
+    banner.style.display = 'flex';
+}
+
+/**
+ * エクスポート通知バナーを非表示
+ */
+function hideExportReminderBanner() {
+    const banner = document.getElementById('export-reminder-banner');
+    if (banner) banner.style.display = 'none';
+}
+
+/**
+ * エクスポート通知バナーと設定UIを初期化
+ */
+function initExportReminder() {
+    const closeBtn = document.getElementById('export-reminder-close');
+    const dontShowCb = document.getElementById('export-reminder-dont-show');
+    const toSettingsLink = document.getElementById('export-reminder-to-settings');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            if (dontShowCb && dontShowCb.checked) {
+                setExportReminderEnabled(false);
+                const enabledCb = document.getElementById('export-reminder-enabled');
+                if (enabledCb) enabledCb.checked = false;
+            }
+            hideExportReminderBanner();
+        });
+    }
+    if (toSettingsLink) {
+        toSettingsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideExportReminderBanner();
+            const btn = document.querySelector('.tab-nav button[data-tab="settings"]');
+            if (btn) btn.click();
+        });
+    }
+
+    const daysSelect = document.getElementById('export-reminder-days');
+    const enabledCb = document.getElementById('export-reminder-enabled');
+    const saveBtn = document.getElementById('save-export-reminder-btn');
+    if (daysSelect) {
+        const days = getExportReminderDays();
+        daysSelect.value = String(days);
+        if (!daysSelect.querySelector(`option[value="${days}"]`)) {
+            daysSelect.value = '7';
+        }
+    }
+    if (enabledCb) enabledCb.checked = getExportReminderEnabled();
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const days = parseInt(document.getElementById('export-reminder-days').value, 10);
+            const enabled = document.getElementById('export-reminder-enabled').checked;
+            if (!isNaN(days) && days >= 1 && days <= 365) {
+                setExportReminderDays(days);
+            }
+            setExportReminderEnabled(enabled);
+            showMessage('settings-message', 'エクスポート通知の設定を保存しました', 'success');
         });
     }
 }

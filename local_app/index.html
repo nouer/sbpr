@@ -41,6 +41,17 @@
         <button id="update-banner-close" class="update-banner-close" type="button" aria-label="閉じる">&times;</button>
     </div>
 
+    <!-- エクスポート通知バナー -->
+    <div id="export-reminder-banner" class="export-reminder-banner" style="display:none;">
+        <span id="export-reminder-text">指定期間エクスポートしていません。バックアップのためエクスポートをお勧めします。</span>
+        <label class="export-reminder-dismiss-label">
+            <input type="checkbox" id="export-reminder-dont-show">
+            <span>この通知を表示しない</span>
+        </label>
+        <a href="#" id="export-reminder-to-settings" class="export-reminder-link">設定</a>
+        <button id="export-reminder-close" class="export-reminder-close" type="button" aria-label="閉じる">&times;</button>
+    </div>
+
     <!-- タブナビゲーション -->
     <nav class="tab-nav" id="tab-nav">
         <button class="active" data-tab="record">記録</button>
@@ -54,8 +65,6 @@
     <div id="tab-record" class="tab-content active">
         <div class="card">
             <div class="card-title">血圧を記録する</div>
-
-            <div id="record-message" class="message"></div>
 
             <form id="bp-form" autocomplete="off">
                 <div class="form-group">
@@ -122,7 +131,25 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block" id="save-btn">記録を保存</button>
+                <div id="record-message" class="message message-below-btn"></div>
             </form>
+        </div>
+
+        <div class="card">
+            <div class="card-title">服薬しなかった日を記録</div>
+            <p class="no-medication-description">血圧を測っていない日でも、服薬忘れだけ記録できます。</p>
+            <div class="no-medication-form">
+                <div class="form-group">
+                    <label for="no-medication-date">日付</label>
+                    <input type="date" id="no-medication-date">
+                </div>
+                <div class="form-group">
+                    <label for="no-medication-memo">メモ（任意）</label>
+                    <input type="text" id="no-medication-memo" placeholder="例: 旅行で忘れた">
+                </div>
+                <button type="button" class="btn btn-secondary" id="save-no-medication-btn">服薬なしで保存</button>
+                <div id="no-medication-message" class="message message-below-btn"></div>
+            </div>
         </div>
 
         <!-- 直近の記録 -->
@@ -229,6 +256,29 @@
                 <h3>全データ削除</h3>
                 <p>全ての記録データを削除します。この操作は取り消せません。</p>
                 <button class="btn btn-danger" id="delete-all-btn">全データ削除</button>
+            </div>
+
+            <div class="setting-item">
+                <h3>エクスポート通知</h3>
+                <p>指定期間エクスポートしていない場合、画面を開いたときやフォーカス時に通知を表示します。「この通知を表示しない」でオフにした場合は設定で再度有効にできます。</p>
+                <div class="form-row" style="align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="export-reminder-days">通知する間隔（日）</label>
+                        <select id="export-reminder-days" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                            <option value="3">3日</option>
+                            <option value="7" selected>7日</option>
+                            <option value="14">14日</option>
+                            <option value="30">30日</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-group-checkbox" style="margin: 0;">
+                        <label class="checkbox-label" for="export-reminder-enabled">
+                            <input type="checkbox" id="export-reminder-enabled" checked>
+                            <span>通知を有効にする</span>
+                        </label>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" id="save-export-reminder-btn" style="margin-top: 8px;">保存</button>
             </div>
         </div>
 
@@ -413,41 +463,43 @@
                     <label for="edit-datetime">測定日時</label>
                     <input type="datetime-local" id="edit-datetime">
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-systolic">最高血圧 (mmHg)</label>
-                        <input type="number" id="edit-systolic" min="50" max="300" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-diastolic">最低血圧 (mmHg)</label>
-                        <input type="number" id="edit-diastolic" min="30" max="200" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-pulse">脈拍数 (bpm)</label>
-                        <input type="number" id="edit-pulse" min="30" max="250">
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-weight">体重 (kg)</label>
-                        <input type="number" id="edit-weight" min="20" max="300" step="0.1">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>気分</label>
-                        <div class="level-selector" id="edit-mood">
-                            <button type="button" class="level-btn" data-value="3" title="良い">😊 良い</button>
-                            <button type="button" class="level-btn" data-value="2" title="普通">😐 普通</button>
-                            <button type="button" class="level-btn" data-value="1" title="悪い">😞 悪い</button>
+                <div id="edit-bp-fields">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-systolic">最高血圧 (mmHg)</label>
+                            <input type="number" id="edit-systolic" min="50" max="300" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-diastolic">最低血圧 (mmHg)</label>
+                            <input type="number" id="edit-diastolic" min="30" max="200" required>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>体調</label>
-                        <div class="level-selector" id="edit-condition">
-                            <button type="button" class="level-btn" data-value="3" title="良い">♪ 良い</button>
-                            <button type="button" class="level-btn" data-value="2" title="普通">→ 普通</button>
-                            <button type="button" class="level-btn" data-value="1" title="悪い">↓ 悪い</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-pulse">脈拍数 (bpm)</label>
+                            <input type="number" id="edit-pulse" min="30" max="250">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-weight">体重 (kg)</label>
+                            <input type="number" id="edit-weight" min="20" max="300" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>気分</label>
+                            <div class="level-selector" id="edit-mood">
+                                <button type="button" class="level-btn" data-value="3" title="良い">😊 良い</button>
+                                <button type="button" class="level-btn" data-value="2" title="普通">😐 普通</button>
+                                <button type="button" class="level-btn" data-value="1" title="悪い">😞 悪い</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>体調</label>
+                            <div class="level-selector" id="edit-condition">
+                                <button type="button" class="level-btn" data-value="3" title="良い">♪ 良い</button>
+                                <button type="button" class="level-btn" data-value="2" title="普通">→ 普通</button>
+                                <button type="button" class="level-btn" data-value="1" title="悪い">↓ 悪い</button>
+                            </div>
                         </div>
                     </div>
                 </div>

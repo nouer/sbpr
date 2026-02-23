@@ -408,6 +408,55 @@ describe('E2E Test: sbpr App', () => {
         expect(pageErrors.length).toBe(0);
     }, 60000);
 
+    test('E2E-015b: エクスポート実行後に最終エクスポート日時がlocalStorageに保存される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.evaluate(() => localStorage.removeItem('sbpr_last_export_at'));
+
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+        await page.click('#export-btn');
+        await new Promise(r => setTimeout(r, 500));
+
+        const lastExportAt = await page.evaluate(() => localStorage.getItem('sbpr_last_export_at'));
+        expect(lastExportAt).not.toBeNull();
+        expect(() => new Date(lastExportAt).toISOString()).not.toThrow();
+        expect(new Date(lastExportAt).getTime()).toBeLessThanOrEqual(Date.now() + 1000);
+        expect(new Date(lastExportAt).getTime()).toBeGreaterThanOrEqual(Date.now() - 60000);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-015c: 服薬しなかった日を記録すると直近の記録に「服薬なし」で表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+
+        await page.click('[data-tab="record"]');
+        await page.waitForSelector('#tab-record.active', { timeout: 5000 });
+
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        await page.evaluate((d) => {
+            const el = document.getElementById('no-medication-date');
+            if (el) el.value = d;
+        }, dateStr);
+        await page.click('#save-no-medication-btn');
+        await new Promise(r => setTimeout(r, 800));
+
+        const hasSuccess = await page.evaluate(() => {
+            const msg = document.getElementById('no-medication-message');
+            return msg && msg.textContent.includes('保存しました');
+        });
+        expect(hasSuccess).toBe(true);
+
+        const hasNoMedicationLabel = await page.evaluate(() => {
+            const list = document.querySelector('#recent-records .record-list');
+            return list && list.innerHTML.includes('服薬なし');
+        });
+        expect(hasNoMedicationLabel).toBe(true);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
     test('E2E-016: インポートでプロフィールとAI備考とAIモデルが復元される', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
 

@@ -5,6 +5,9 @@ const {
     classifyBP,
     classifyBPClass,
     validateBPInput,
+    isBPRecord,
+    isNoMedicationRecord,
+    validateNoMedicationDate,
     calcAverage,
     calcMinMax,
     generateId,
@@ -159,6 +162,44 @@ describe('validateBPInput - バリデーション', () => {
     test('体重の境界値（300kg）', () => {
         const result = validateBPInput({ systolic: 120, diastolic: 80, weight: 300 });
         expect(result.valid).toBe(true);
+    });
+});
+
+describe('isBPRecord / isNoMedicationRecord', () => {
+    test('isBPRecord: 血圧ありレコードは true', () => {
+        expect(isBPRecord({ systolic: 120, diastolic: 80 })).toBe(true);
+        expect(isBPRecord({ noMedication: false, systolic: 120, diastolic: 80 })).toBe(true);
+    });
+    test('isBPRecord: noMedication は false', () => {
+        expect(isBPRecord({ noMedication: true, systolic: null, diastolic: null })).toBe(false);
+    });
+    test('isBPRecord: null は false', () => {
+        expect(isBPRecord(null)).toBe(false);
+        expect(isBPRecord({ systolic: null, diastolic: null })).toBe(false);
+    });
+    test('isNoMedicationRecord: noMedication true は true', () => {
+        expect(isNoMedicationRecord({ noMedication: true })).toBe(true);
+    });
+    test('isNoMedicationRecord: 通常レコードは false', () => {
+        expect(isNoMedicationRecord({ systolic: 120, diastolic: 80 })).toBe(false);
+        expect(isNoMedicationRecord(null)).toBe(false);
+    });
+});
+
+describe('validateNoMedicationDate', () => {
+    test('有効な日付は valid', () => {
+        const r = validateNoMedicationDate('2026-02-15');
+        expect(r.valid).toBe(true);
+        expect(r.errors).toHaveLength(0);
+    });
+    test('空文字は invalid', () => {
+        const r = validateNoMedicationDate('');
+        expect(r.valid).toBe(false);
+        expect(r.errors.length).toBeGreaterThan(0);
+    });
+    test('無効な日付は invalid', () => {
+        const r = validateNoMedicationDate('invalid');
+        expect(r.valid).toBe(false);
     });
 });
 
