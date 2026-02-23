@@ -152,6 +152,16 @@ function getNightStartHour() {
     return isNaN(v) ? 18 : Math.max(0, Math.min(23, v));
 }
 
+/** 2つの日付が同一日（年月日）かどうか */
+function isSameCalendarDay(d1, d2) {
+    if (!d1 || !d2) return false;
+    const a = d1 instanceof Date ? d1 : new Date(d1);
+    const b = d2 instanceof Date ? d2 : new Date(d2);
+    return a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+}
+
 /**
  * 最終エクスポート日時をローカルストレージに保存
  */
@@ -925,17 +935,22 @@ function updateChartContinuous(ctx, records) {
     const bpRecords = records.filter(r => isBPRecord(r));
     const noMedicationRecords = records.filter(r => isNoMedicationRecord(r));
 
-    const labels = bpRecords.map(r => new Date(r.measuredAt));
-    const systolicData = bpRecords.map(r => r.systolic);
-    const diastolicData = bpRecords.map(r => r.diastolic);
-    const pulseData = bpRecords.map(r => r.pulse);
+    const allRecords = [...bpRecords, ...noMedicationRecords].sort(
+        (a, b) => new Date(a.measuredAt) - new Date(b.measuredAt)
+    );
+
+    const labels = allRecords.map(r => new Date(r.measuredAt));
+    const systolicData = allRecords.map(r => isBPRecord(r) ? r.systolic : null);
+    const diastolicData = allRecords.map(r => isBPRecord(r) ? r.diastolic : null);
+    const pulseData = allRecords.map(r => isBPRecord(r) ? r.pulse : null);
+    const noMedData = allRecords.map(r => isNoMedicationRecord(r) ? 50 : null);
+
     const pointRadiusWithMemo = 6;
     const pointRadiusDefault = 3;
     const pointRadiusPulseDefault = 2;
-    const pointRadius = bpRecords.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusDefault));
-    const pointRadiusPulse = bpRecords.map(r => (r.memo ? pointRadiusWithMemo : pointRadiusPulseDefault));
-
-    const noMedicationData = noMedicationRecords.map(r => ({ x: new Date(r.measuredAt), y: 50 }));
+    const pointRadius = allRecords.map(r => isBPRecord(r) ? (r.memo ? pointRadiusWithMemo : pointRadiusDefault) : 0);
+    const pointRadiusPulse = allRecords.map(r => isBPRecord(r) ? (r.memo ? pointRadiusWithMemo : pointRadiusPulseDefault) : 0);
+    const noMedRadius = allRecords.map(r => isNoMedicationRecord(r) ? 8 : 0);
 
     const datasets = [
         {
@@ -947,7 +962,8 @@ function updateChartContinuous(ctx, records) {
             pointRadius: pointRadius,
             pointBackgroundColor: '#dc2626',
             tension: 0.3,
-            fill: false
+            fill: false,
+            spanGaps: true
         },
         {
             label: '最低血圧 (mmHg)',
@@ -958,7 +974,8 @@ function updateChartContinuous(ctx, records) {
             pointRadius: pointRadius,
             pointBackgroundColor: '#2563eb',
             tension: 0.3,
-            fill: false
+            fill: false,
+            spanGaps: true
         },
         {
             label: '脈拍 (bpm)',
@@ -971,17 +988,18 @@ function updateChartContinuous(ctx, records) {
             borderDash: [4, 4],
             tension: 0.3,
             fill: false,
-            yAxisID: 'y1'
+            yAxisID: 'y1',
+            spanGaps: true
         }
     ];
 
-    if (noMedicationData.length > 0) {
+    if (noMedicationRecords.length > 0) {
         datasets.push({
             label: '服薬なし',
-            data: noMedicationData,
+            data: noMedData,
             showLine: false,
             pointStyle: 'triangle',
-            pointRadius: 8,
+            pointRadius: noMedRadius,
             pointBackgroundColor: '#f59e0b',
             borderColor: '#f59e0b',
             yAxisID: 'y'
@@ -1007,19 +1025,35 @@ function updateChartContinuous(ctx, records) {
                     labels: { usePointStyle: true, padding: 12 }
                 },
                 tooltip: {
+                    filter: function(tooltipItem) {
+                        return tooltipItem.parsed.y != null;
+                    },
                     callbacks: {
                         title: function(items) {
                             if (items.length > 0) {
+                                if (items.every(function(it) { return it.dataset.label === '服薬なし'; })) {
+                                    const d = new Date(items[0].parsed.x);
+                                    const pad = function(n) { return String(n).padStart(2, '0'); };
+                                    return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate());
+                                }
                                 return formatDateTime(items[0].parsed.x);
                             }
                             return '';
                         },
+                        label: function(context) {
+                            if (context.dataset.label === '服薬なし') {
+                                return '服薬なし';
+                            }
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            return label + ': ' + value;
+                        },
                         afterBody: function(items) {
                             if (items.length > 0) {
-                                const datasetIndex = items[0].datasetIndex;
                                 const idx = items[0].dataIndex;
-                                if (datasetIndex < 3 && bpRecords[idx] && bpRecords[idx].memo) {
-                                    return ['', 'メモ: ' + bpRecords[idx].memo];
+                                const rec = allRecords[idx];
+                                if (rec && rec.memo) {
+                                    return ['', 'メモ: ' + rec.memo];
                                 }
                             }
                             return [];
@@ -1189,9 +1223,22 @@ function updateChartDayNight(ctx, records) {
                     callbacks: {
                         title: function(items) {
                             if (items.length > 0) {
+                                if (items.every(function(it) { return it.dataset.label === '服薬なし'; })) {
+                                    const d = new Date(items[0].parsed.x);
+                                    const pad = function(n) { return String(n).padStart(2, '0'); };
+                                    return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate());
+                                }
                                 return formatDateTime(items[0].parsed.x);
                             }
                             return '';
+                        },
+                        label: function(context) {
+                            if (context.dataset.label === '服薬なし') {
+                                return '服薬なし';
+                            }
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            return label + ': ' + value;
                         },
                         afterBody: function(items) {
                             if (items.length > 0) {
