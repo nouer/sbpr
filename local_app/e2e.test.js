@@ -953,6 +953,38 @@ describe('E2E Test: sbpr App', () => {
         expect(pageErrors.length).toBe(0);
     }, 60000);
 
+    test('E2E-PWA-007: 設定タブに「強制更新」ボタンが表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        const btnInfo = await page.evaluate(() => {
+            const btn = document.getElementById('force-update-btn');
+            if (!btn) return { exists: false };
+            const style = window.getComputedStyle(btn);
+            return {
+                exists: true,
+                visible: style.display !== 'none' && style.visibility !== 'hidden',
+                text: btn.textContent.trim(),
+                disabled: btn.disabled
+            };
+        });
+
+        expect(btnInfo.exists).toBe(true);
+        expect(btnInfo.visible).toBe(true);
+        expect(btnInfo.text).toBe('強制更新');
+        expect(btnInfo.disabled).toBe(false);
+
+        const statusEl = await page.evaluate(() => {
+            return document.getElementById('force-update-status') !== null;
+        });
+        expect(statusEl).toBe(true);
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
     test('E2E-PWA-004: pageerrorが発生しない（PWA込み全タブ巡回）', async () => {
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
         await waitForAppReady();

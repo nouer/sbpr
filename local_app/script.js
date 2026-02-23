@@ -1349,6 +1349,11 @@ function initSettingsControls() {
     if (checkUpdateBtn) {
         checkUpdateBtn.addEventListener('click', checkForUpdate);
     }
+
+    const forceUpdateBtn = document.getElementById('force-update-btn');
+    if (forceUpdateBtn) {
+        forceUpdateBtn.addEventListener('click', forceUpdate);
+    }
 }
 
 /**
@@ -2294,6 +2299,38 @@ function hideUpdateBanner() {
     const banner = document.getElementById('update-banner');
     if (banner) {
         banner.style.display = 'none';
+    }
+}
+
+/**
+ * 強制更新: Service Worker解除 → キャッシュ全削除 → ハードリロード
+ */
+async function forceUpdate() {
+    const statusEl = document.getElementById('force-update-status');
+    const btn = document.getElementById('force-update-btn');
+
+    if (btn) btn.disabled = true;
+    if (statusEl) statusEl.textContent = '更新中...';
+
+    try {
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map(r => r.unregister()));
+        }
+
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+        }
+
+        if (statusEl) statusEl.textContent = 'キャッシュを削除しました。リロードします...';
+
+        setTimeout(() => {
+            location.href = location.pathname + '?cache_bust=' + Date.now();
+        }, 500);
+    } catch (e) {
+        if (statusEl) statusEl.textContent = '強制更新に失敗しました: ' + e.message;
+        if (btn) btn.disabled = false;
     }
 }
 
