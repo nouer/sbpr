@@ -135,6 +135,9 @@ async function deleteAllRecords() {
 let bpChart = null;
 let currentPeriod = 7;
 let currentChartMode = 'continuous';
+let lastTooltipIndex = null;
+let lineStyleSwapped = false;
+let currentAIPeriod = 7;
 
 const LS_KEY_DAY_START = 'sbpr_day_start_hour';
 const LS_KEY_NIGHT_START = 'sbpr_night_start_hour';
@@ -309,6 +312,7 @@ async function initApp() {
     initChartModeControls();
     initChartControls();
     initChartSettings();
+    initLinestyleToggle();
     initFilterControls();
     initSettingsControls();
     initEditDialog();
@@ -861,9 +865,25 @@ function initChartModeControls() {
             buttons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentChartMode = btn.dataset.mode;
+            updateLinestyleToggleVisibility();
             refreshChart();
         });
     });
+}
+
+function initLinestyleToggle() {
+    const checkbox = document.getElementById('linestyle-swap');
+    checkbox.addEventListener('change', () => {
+        lineStyleSwapped = checkbox.checked;
+        document.getElementById('linestyle-default').classList.toggle('active', !lineStyleSwapped);
+        document.getElementById('linestyle-swapped').classList.toggle('active', lineStyleSwapped);
+        refreshChart();
+    });
+}
+
+function updateLinestyleToggleVisibility() {
+    const toggle = document.getElementById('chart-linestyle-toggle');
+    toggle.style.display = currentChartMode === 'daynight' ? 'flex' : 'none';
 }
 
 function initChartSettings() {
@@ -1015,6 +1035,21 @@ function updateChartContinuous(ctx, records) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            onClick: function(event, elements) {
+                if (elements.length > 0) {
+                    const idx = elements[0].datasetIndex + '-' + elements[0].index;
+                    if (lastTooltipIndex === idx) {
+                        this.tooltip.setActiveElements([]);
+                        this.setActiveElements([]);
+                        this.update();
+                        lastTooltipIndex = null;
+                    } else {
+                        lastTooltipIndex = idx;
+                    }
+                } else {
+                    lastTooltipIndex = null;
+                }
+            },
             interaction: {
                 mode: 'index',
                 intersect: false
@@ -1115,6 +1150,11 @@ function updateChartDayNight(ctx, records) {
     const nightPointR = pointR(nightRecords, false);
     const nightPointRPulse = pointR(nightRecords, true);
 
+    const dayBPDash = lineStyleSwapped ? [6, 3] : undefined;
+    const dayPulseDash = lineStyleSwapped ? [4, 4, 1, 4] : [4, 4];
+    const nightBPDash = lineStyleSwapped ? undefined : [6, 3];
+    const nightPulseDash = lineStyleSwapped ? [4, 4] : [4, 4, 1, 4];
+
     const datasets = [
         {
             label: '日中 最高 (mmHg)',
@@ -1124,71 +1164,73 @@ function updateChartDayNight(ctx, records) {
             borderWidth: 2,
             pointRadius: dayPointR,
             pointBackgroundColor: '#dc2626',
+            borderDash: dayBPDash,
             tension: 0.3,
             fill: false
         },
-                {
-                    label: '日中 最低 (mmHg)',
-                    data: toXY(dayRecords, 'diastolic'),
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: dayPointR,
-                    pointBackgroundColor: '#2563eb',
-                    tension: 0.3,
-                    fill: false
-                },
-                {
-                    label: '日中 脈拍 (bpm)',
-                    data: toXY(dayRecords, 'pulse'),
-                    borderColor: '#16a34a',
-                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                    borderWidth: 1.5,
-                    pointRadius: dayPointRPulse,
-                    pointBackgroundColor: '#16a34a',
-                    borderDash: [4, 4],
-                    tension: 0.3,
-                    fill: false,
-                    yAxisID: 'y1'
-                },
-                {
-                    label: '夜間 最高 (mmHg)',
-                    data: toXY(nightRecords, 'systolic'),
-                    borderColor: '#f87171',
-                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: nightPointR,
-                    pointBackgroundColor: '#f87171',
-                    borderDash: [6, 3],
-                    tension: 0.3,
-                    fill: false
-                },
-                {
-                    label: '夜間 最低 (mmHg)',
-                    data: toXY(nightRecords, 'diastolic'),
-                    borderColor: '#60a5fa',
-                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: nightPointR,
-                    pointBackgroundColor: '#60a5fa',
-                    borderDash: [6, 3],
-                    tension: 0.3,
-                    fill: false
-                },
-                {
-                    label: '夜間 脈拍 (bpm)',
-                    data: toXY(nightRecords, 'pulse'),
-                    borderColor: '#4ade80',
-                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                    borderWidth: 1.5,
-                    pointRadius: nightPointRPulse,
-                    pointBackgroundColor: '#4ade80',
-                    borderDash: [4, 4, 1, 4],
-                    tension: 0.3,
-                    fill: false,
-                    yAxisID: 'y1'
-                }
-            ];
+        {
+            label: '日中 最低 (mmHg)',
+            data: toXY(dayRecords, 'diastolic'),
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderWidth: 2,
+            pointRadius: dayPointR,
+            pointBackgroundColor: '#2563eb',
+            borderDash: dayBPDash,
+            tension: 0.3,
+            fill: false
+        },
+        {
+            label: '日中 脈拍 (bpm)',
+            data: toXY(dayRecords, 'pulse'),
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+            borderWidth: 1.5,
+            pointRadius: dayPointRPulse,
+            pointBackgroundColor: '#16a34a',
+            borderDash: dayPulseDash,
+            tension: 0.3,
+            fill: false,
+            yAxisID: 'y1'
+        },
+        {
+            label: '夜間 最高 (mmHg)',
+            data: toXY(nightRecords, 'systolic'),
+            borderColor: '#f87171',
+            backgroundColor: 'rgba(248, 113, 113, 0.1)',
+            borderWidth: 2,
+            pointRadius: nightPointR,
+            pointBackgroundColor: '#f87171',
+            borderDash: nightBPDash,
+            tension: 0.3,
+            fill: false
+        },
+        {
+            label: '夜間 最低 (mmHg)',
+            data: toXY(nightRecords, 'diastolic'),
+            borderColor: '#60a5fa',
+            backgroundColor: 'rgba(96, 165, 250, 0.1)',
+            borderWidth: 2,
+            pointRadius: nightPointR,
+            pointBackgroundColor: '#60a5fa',
+            borderDash: nightBPDash,
+            tension: 0.3,
+            fill: false
+        },
+        {
+            label: '夜間 脈拍 (bpm)',
+            data: toXY(nightRecords, 'pulse'),
+            borderColor: '#4ade80',
+            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+            borderWidth: 1.5,
+            pointRadius: nightPointRPulse,
+            pointBackgroundColor: '#4ade80',
+            borderDash: nightPulseDash,
+            tension: 0.3,
+            fill: false,
+            yAxisID: 'y1'
+        }
+    ];
     if (noMedicationData.length > 0) {
         datasets.push({
             label: '服薬なし',
@@ -1210,6 +1252,21 @@ function updateChartDayNight(ctx, records) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            onClick: function(event, elements) {
+                if (elements.length > 0) {
+                    const idx = elements[0].datasetIndex + '-' + elements[0].index;
+                    if (lastTooltipIndex === idx) {
+                        this.tooltip.setActiveElements([]);
+                        this.setActiveElements([]);
+                        this.update();
+                        lastTooltipIndex = null;
+                    } else {
+                        lastTooltipIndex = idx;
+                    }
+                } else {
+                    lastTooltipIndex = null;
+                }
+            },
             interaction: {
                 mode: 'nearest',
                 intersect: false
@@ -1842,6 +1899,15 @@ async function initAIDiagnosis() {
     document.getElementById('ai-send-btn').addEventListener('click', sendFollowUp);
     document.getElementById('ai-clear-btn').addEventListener('click', clearAIConversation);
 
+    const aiPeriodButtons = document.querySelectorAll('#ai-period-controls button');
+    aiPeriodButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            aiPeriodButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentAIPeriod = btn.dataset.period === 'all' ? 'all' : Number(btn.dataset.period);
+        });
+    });
+
     const aiInput = document.getElementById('ai-input');
     aiInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -1886,14 +1952,27 @@ function buildSystemPrompt() {
 {{SUGGEST:質問テキスト3}}`;
 }
 
-async function buildDataSummary() {
-    const records = await getAllRecords();
+async function buildDataSummary(period) {
+    let records = await getAllRecords();
+
+    if (period && period !== 'all') {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - period);
+        records = records.filter(r => new Date(r.measuredAt) >= cutoff);
+    }
+
     const bpRecords = filterBPRecords(records);
     const avg = calcAverage(bpRecords);
     const minMax = calcMinMax(bpRecords);
     const aiMemo = getAIMemo();
 
     let prompt = '';
+
+    if (period && period !== 'all') {
+        prompt += `【分析対象期間】直近${period}日間\n\n`;
+    } else {
+        prompt += '【分析対象期間】全期間\n\n';
+    }
 
     if (records.length === 0) {
         prompt += '【血圧測定データ】\nまだ測定データがありません。\n';
@@ -1972,7 +2051,7 @@ async function startAIDiagnosis() {
     aiConversation = [];
     renderAIChatMessages();
 
-    const dataSummary = await buildDataSummary();
+    const dataSummary = await buildDataSummary(currentAIPeriod);
     const userPrompt = dataSummary + '\n上記のデータに基づいて、血圧の傾向分析と健康アドバイスをお願いします。';
 
     aiConversation.push({ role: 'user', content: userPrompt, displayContent: '血圧データに基づいた健康アドバイスをお願いします。' });
@@ -1998,7 +2077,7 @@ async function sendFollowUp() {
     const hasNew = await hasNewRecordsSinceLastDiagnosis();
 
     if (hasNew) {
-        const dataSummary = await buildDataSummary();
+        const dataSummary = await buildDataSummary(currentAIPeriod);
         const updateNote = '【データ更新通知】前回の診断以降に新しい測定データが追加されました。最新のデータは以下の通りです。\n\n' + dataSummary;
         aiConversation.push({ role: 'user', content: updateNote, displayContent: '（新しい測定データを反映しました）' });
         aiConversation.push({ role: 'assistant', content: '新しい測定データを確認しました。最新のデータを踏まえてお答えします。' });

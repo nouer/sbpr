@@ -178,6 +178,13 @@
                 <button data-period="90">90日</button>
                 <button data-period="all">全期間</button>
             </div>
+            <div class="chart-controls" id="chart-linestyle-toggle" style="display:none;">
+                <label class="linestyle-toggle-label">
+                    <span class="linestyle-option active" id="linestyle-default">日中: 実線 / 夜間: 破線</span>
+                    <input type="checkbox" id="linestyle-swap" class="linestyle-checkbox">
+                    <span class="linestyle-option" id="linestyle-swapped">日中: 破線 / 夜間: 実線</span>
+                </label>
+            </div>
             <div class="chart-container">
                 <canvas id="bp-chart"></canvas>
             </div>
@@ -437,6 +444,13 @@
             </div>
             <div class="ai-input-area">
                 <div id="ai-status" class="ai-status"></div>
+                <div class="chart-controls" id="ai-period-controls" style="margin-bottom: 8px;">
+                    <span class="control-label" style="font-size: 0.85em; color: var(--gray-600); align-self: center;">診断範囲:</span>
+                    <button data-period="7" class="active">7日</button>
+                    <button data-period="30">30日</button>
+                    <button data-period="90">90日</button>
+                    <button data-period="all">全期間</button>
+                </div>
                 <div class="ai-input-row" id="ai-followup-row" style="display:none;">
                     <textarea id="ai-input" class="ai-input" rows="2" placeholder="追加で聞きたいことを入力..."></textarea>
                     <button class="btn btn-primary" id="ai-send-btn">送信</button>

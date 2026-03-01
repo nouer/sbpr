@@ -676,6 +676,57 @@ body {
     margin-bottom: 8px;
 }
 
+.linestyle-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    color: var(--gray-600);
+}
+
+.linestyle-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 40px;
+    height: 22px;
+    background: var(--gray-300);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.linestyle-checkbox::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.linestyle-checkbox:checked {
+    background: var(--primary);
+}
+
+.linestyle-checkbox:checked::after {
+    transform: translateX(18px);
+}
+
+.linestyle-option {
+    transition: color 0.2s;
+}
+
+.linestyle-option.active {
+    color: var(--primary);
+    font-weight: 600;
+}
+
 /* === 設定 === */
 .setting-item {
     padding: 16px 0;

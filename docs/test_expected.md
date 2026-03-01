@@ -84,21 +84,36 @@
 * #update-banner 要素が存在し、初期状態では `display: none` である
 * 設定タブに #check-update-btn ボタンが表示される
 
+### 2.6 グラフ操作
+* 連続モード・日中/夜間モード両方のChart.jsインスタンスに `onClick` ハンドラが設定されている
+* 日中・夜間モードに切り替えると `#chart-linestyle-toggle` が表示される
+* 連続モードに切り替えると `#chart-linestyle-toggle` が非表示になる
+* 線種トグルをクリックするとグラフが再描画され、JSエラーが発生しない
+* トグルON時に `#linestyle-swapped` に `.active` クラスが付与される
+
+### 2.7 AI診断期間選択
+* AI診断タブに `#ai-period-controls` 内の4つのボタン（7日/30日/90日/全期間）が表示される
+* デフォルトで7日ボタンに `.active` クラスが付与されている
+* 30日ボタンをクリックすると、30日ボタンが `.active` になり7日ボタンの `.active` が外れる
+
 ## 3. テスト実行結果（最新）
-* 実行日時: 2026-02-17
-* 単体テスト: 全58件 PASS（カバレッジ: Stmts 97.91%, Branch 94.11%, Funcs 100%, Lines 97.29%）
-* E2Eテスト: 全テスト PASS（合計テスト: 79件全て PASS、Test Suites: 2 passed）
-  * 既存テスト（E2E-001〜E2E-024）: 全て PASS
-  * 固定UI要素テスト:
-    * E2E-025（バージョン情報表示）は PASS
-    * E2E-026（スクロールトップボタン表示）は PASS
-    * E2E-027（スクロールトップボタン動作）は PASS
-    * E2E-028（ヘッダータップでページ先頭へ戻る）は PASS
-    * E2E-029（↑ボタン/ヘッダータップでAIチャット領域も先頭に戻る）は PASS
+* 実行日時: 2026-03-01
+* 単体テスト: 全58件 PASS（カバレッジ: Stmts 98.13%, Branch 94.73%, Funcs 100%, Lines 97.64%）
+* E2Eテスト: 95 passed, 1 failed（合計テスト: 96件、Test Suites: 1 failed, 1 passed）
+  * 既存テスト（E2E-001〜E2E-029）: 全て PASS
+  * グラフ操作テスト:
+    * E2E-030（ツールチップの再タップ閉じ onClick定義確認）は PASS
+    * E2E-031（日中/夜間モードで線種トグル表示）は PASS
+    * E2E-032（連続モードで線種トグル非表示）は PASS
+    * E2E-033（線種トグルでグラフ再描画 エラーなし）は PASS
+  * AI診断期間選択テスト:
+    * E2E-034（AI診断タブに期間選択ボタン表示）は PASS
+    * E2E-035（AI診断の期間選択ボタン切替）は PASS
   * PWA テスト:
     * E2E-PWA-001（manifest.json読み込み）は PASS
     * E2E-PWA-002（Service Worker登録）は PASS
-    * E2E-PWA-003（PWA meta tags設定）は PASS
+    * E2E-PWA-003（PWA meta tags設定）は FAIL（既存の不具合: apple-touch-iconのhref期待値が `.svg` だが実際は `.png`）
     * E2E-PWA-004（PWA込み全タブ巡回 pageerror検知）は PASS
     * E2E-PWA-005（更新バナー要素の存在確認）は PASS
     * E2E-PWA-006（設定タブの「更新を確認」ボタン表示）は PASS
+    * E2E-PWA-007（設定タブの「強制更新」ボタン表示）は PASS
