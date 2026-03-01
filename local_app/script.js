@@ -960,10 +960,10 @@ function updateChart(records) {
     if (currentChartMode === 'daynight') {
         updateChartDayNight(ctx, records);
     } else if (currentChartMode === 'day') {
-        const dayRecords = records.filter(r => isDaytime(r.measuredAt));
+        const dayRecords = records.filter(r => isDaytime(r.measuredAt) || isNoMedicationRecord(r));
         updateChartContinuous(ctx, dayRecords);
     } else if (currentChartMode === 'night') {
-        const nightRecords = records.filter(r => !isDaytime(r.measuredAt));
+        const nightRecords = records.filter(r => !isDaytime(r.measuredAt) || isNoMedicationRecord(r));
         updateChartContinuous(ctx, nightRecords);
     } else {
         updateChartContinuous(ctx, records);

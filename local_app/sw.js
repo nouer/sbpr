@@ -3,7 +3,7 @@
  * アセットキャッシュによる完全オフライン対応
  */
 
-const CACHE_NAME = 'sbpr-v1.0.0-1772337962';
+const CACHE_NAME = 'sbpr-v1.0.0-1772338171';
 
 const PRECACHE_ASSETS = [
     '/',
