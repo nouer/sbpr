@@ -1179,12 +1179,12 @@ function updateChartDayNight(ctx, records) {
     const nightBPDash = lineStyleSwapped ? undefined : [6, 3];
     const nightPulseDash = lineStyleSwapped ? [4, 4] : [4, 4, 1, 4];
 
-    const daySysColor = lineStyleSwapped ? 'rgba(220, 38, 38, 0.35)' : '#dc2626';
-    const dayDiaColor = lineStyleSwapped ? 'rgba(37, 99, 235, 0.35)' : '#2563eb';
-    const dayPulseColor = lineStyleSwapped ? 'rgba(22, 163, 74, 0.35)' : '#16a34a';
-    const nightSysColor = lineStyleSwapped ? '#f87171' : 'rgba(248, 113, 113, 0.35)';
-    const nightDiaColor = lineStyleSwapped ? '#60a5fa' : 'rgba(96, 165, 250, 0.35)';
-    const nightPulseColor = lineStyleSwapped ? '#4ade80' : 'rgba(74, 222, 128, 0.35)';
+    const daySysColor = '#dc2626';
+    const dayDiaColor = '#2563eb';
+    const dayPulseColor = '#16a34a';
+    const nightSysColor = 'rgba(248, 113, 113, 0.35)';
+    const nightDiaColor = 'rgba(96, 165, 250, 0.35)';
+    const nightPulseColor = 'rgba(74, 222, 128, 0.35)';
 
     const datasets = [
         {
