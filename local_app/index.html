@@ -171,6 +171,8 @@
             <div class="chart-controls" id="chart-mode-controls">
                 <button data-mode="continuous" class="active">連続</button>
                 <button data-mode="daynight">日中・夜間</button>
+                <button data-mode="day">日中のみ</button>
+                <button data-mode="night">夜間のみ</button>
             </div>
             <div class="chart-controls" id="chart-period-controls">
                 <button data-period="7" class="active">7日</button>
@@ -213,7 +215,7 @@
                     <div class="stat-item">
                         <div class="stat-label">記録数</div>
                         <div class="stat-value" id="stat-count">0</div>
-                        <div class="stat-unit">件</div>
+                        <div class="stat-unit" id="stat-count-unit">件</div>
                     </div>
                 </div>
             </div>

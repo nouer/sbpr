@@ -668,6 +668,16 @@ body {
     border-color: var(--primary);
 }
 
+#chart-mode-controls button.active {
+    background: #6366f1;
+    border-color: #6366f1;
+}
+
+#chart-period-controls button.active {
+    background: #0d9488;
+    border-color: #0d9488;
+}
+
 .chart-controls button:hover:not(.active) {
     background: var(--gray-100);
 }

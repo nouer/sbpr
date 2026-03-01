@@ -959,6 +959,12 @@ function updateChart(records) {
 
     if (currentChartMode === 'daynight') {
         updateChartDayNight(ctx, records);
+    } else if (currentChartMode === 'day') {
+        const dayRecords = records.filter(r => isDaytime(r.measuredAt));
+        updateChartContinuous(ctx, dayRecords);
+    } else if (currentChartMode === 'night') {
+        const nightRecords = records.filter(r => !isDaytime(r.measuredAt));
+        updateChartContinuous(ctx, nightRecords);
     } else {
         updateChartContinuous(ctx, records);
     }
@@ -1173,15 +1179,22 @@ function updateChartDayNight(ctx, records) {
     const nightBPDash = lineStyleSwapped ? undefined : [6, 3];
     const nightPulseDash = lineStyleSwapped ? [4, 4] : [4, 4, 1, 4];
 
+    const daySysColor = lineStyleSwapped ? 'rgba(220, 38, 38, 0.35)' : '#dc2626';
+    const dayDiaColor = lineStyleSwapped ? 'rgba(37, 99, 235, 0.35)' : '#2563eb';
+    const dayPulseColor = lineStyleSwapped ? 'rgba(22, 163, 74, 0.35)' : '#16a34a';
+    const nightSysColor = lineStyleSwapped ? '#f87171' : 'rgba(248, 113, 113, 0.35)';
+    const nightDiaColor = lineStyleSwapped ? '#60a5fa' : 'rgba(96, 165, 250, 0.35)';
+    const nightPulseColor = lineStyleSwapped ? '#4ade80' : 'rgba(74, 222, 128, 0.35)';
+
     const datasets = [
         {
             label: '日中 最高 (mmHg)',
             data: toXY(dayRecords, 'systolic'),
-            borderColor: '#dc2626',
+            borderColor: daySysColor,
             backgroundColor: 'rgba(220, 38, 38, 0.1)',
             borderWidth: 2,
             pointRadius: dayPointR,
-            pointBackgroundColor: '#dc2626',
+            pointBackgroundColor: daySysColor,
             borderDash: dayBPDash,
             tension: 0.3,
             fill: false
@@ -1189,11 +1202,11 @@ function updateChartDayNight(ctx, records) {
         {
             label: '日中 最低 (mmHg)',
             data: toXY(dayRecords, 'diastolic'),
-            borderColor: '#2563eb',
+            borderColor: dayDiaColor,
             backgroundColor: 'rgba(37, 99, 235, 0.1)',
             borderWidth: 2,
             pointRadius: dayPointR,
-            pointBackgroundColor: '#2563eb',
+            pointBackgroundColor: dayDiaColor,
             borderDash: dayBPDash,
             tension: 0.3,
             fill: false
@@ -1201,11 +1214,11 @@ function updateChartDayNight(ctx, records) {
         {
             label: '日中 脈拍 (bpm)',
             data: toXY(dayRecords, 'pulse'),
-            borderColor: '#16a34a',
+            borderColor: dayPulseColor,
             backgroundColor: 'rgba(22, 163, 74, 0.1)',
             borderWidth: 1.5,
             pointRadius: dayPointRPulse,
-            pointBackgroundColor: '#16a34a',
+            pointBackgroundColor: dayPulseColor,
             borderDash: dayPulseDash,
             tension: 0.3,
             fill: false,
@@ -1214,11 +1227,11 @@ function updateChartDayNight(ctx, records) {
         {
             label: '夜間 最高 (mmHg)',
             data: toXY(nightRecords, 'systolic'),
-            borderColor: '#f87171',
+            borderColor: nightSysColor,
             backgroundColor: 'rgba(248, 113, 113, 0.1)',
             borderWidth: 2,
             pointRadius: nightPointR,
-            pointBackgroundColor: '#f87171',
+            pointBackgroundColor: nightSysColor,
             borderDash: nightBPDash,
             tension: 0.3,
             fill: false
@@ -1226,11 +1239,11 @@ function updateChartDayNight(ctx, records) {
         {
             label: '夜間 最低 (mmHg)',
             data: toXY(nightRecords, 'diastolic'),
-            borderColor: '#60a5fa',
+            borderColor: nightDiaColor,
             backgroundColor: 'rgba(96, 165, 250, 0.1)',
             borderWidth: 2,
             pointRadius: nightPointR,
-            pointBackgroundColor: '#60a5fa',
+            pointBackgroundColor: nightDiaColor,
             borderDash: nightBPDash,
             tension: 0.3,
             fill: false
@@ -1238,11 +1251,11 @@ function updateChartDayNight(ctx, records) {
         {
             label: '夜間 脈拍 (bpm)',
             data: toXY(nightRecords, 'pulse'),
-            borderColor: '#4ade80',
+            borderColor: nightPulseColor,
             backgroundColor: 'rgba(74, 222, 128, 0.1)',
             borderWidth: 1.5,
             pointRadius: nightPointRPulse,
-            pointBackgroundColor: '#4ade80',
+            pointBackgroundColor: nightPulseColor,
             borderDash: nightPulseDash,
             tension: 0.3,
             fill: false,
@@ -1417,6 +1430,12 @@ function updateStats(records) {
         el('stat-avg-pulse', '---');
     }
     el('stat-count', records.length);
+
+    const uniqueDays = new Set(records.map(r => {
+        const d = new Date(r.measuredAt);
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    })).size;
+    el('stat-count-unit', `件 / ${uniqueDays}日間`);
 }
 
 /** 血圧記録のみに絞り込む（グラフ・統計用） */
