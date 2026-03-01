@@ -313,6 +313,7 @@ async function initApp() {
     initChartControls();
     initChartSettings();
     initLinestyleToggle();
+    initChartTooltipDismiss();
     initFilterControls();
     initSettingsControls();
     initEditDialog();
@@ -886,6 +887,18 @@ function updateLinestyleToggleVisibility() {
     toggle.style.display = currentChartMode === 'daynight' ? 'flex' : 'none';
 }
 
+function initChartTooltipDismiss() {
+    document.addEventListener('click', function(e) {
+        if (!bpChart) return;
+        const canvas = bpChart.canvas;
+        if (!canvas || canvas.contains(e.target)) return;
+        bpChart.tooltip.setActiveElements([]);
+        bpChart.setActiveElements([]);
+        bpChart.update();
+        lastTooltipIndex = null;
+    });
+}
+
 function initChartSettings() {
     const dayInput = document.getElementById('input-day-start');
     const nightInput = document.getElementById('input-night-start');
@@ -1047,6 +1060,11 @@ function updateChartContinuous(ctx, records) {
                         lastTooltipIndex = idx;
                     }
                 } else {
+                    if (lastTooltipIndex !== null) {
+                        this.tooltip.setActiveElements([]);
+                        this.setActiveElements([]);
+                        this.update();
+                    }
                     lastTooltipIndex = null;
                 }
             },
@@ -1264,6 +1282,11 @@ function updateChartDayNight(ctx, records) {
                         lastTooltipIndex = idx;
                     }
                 } else {
+                    if (lastTooltipIndex !== null) {
+                        this.tooltip.setActiveElements([]);
+                        this.setActiveElements([]);
+                        this.update();
+                    }
                     lastTooltipIndex = null;
                 }
             },
