@@ -544,9 +544,8 @@ body {
 .record-meta .memo {
     font-size: 0.8em;
     color: var(--gray-400);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: pre-line;
+    word-break: break-word;
 }
 
 .record-meta .extra-info {

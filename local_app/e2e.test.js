@@ -894,7 +894,7 @@ describe('E2E Test: sbpr App', () => {
         expect(metaTags.themeColor).toBe('#2563eb');
         expect(metaTags.webAppCapable).toBe('yes');
         expect(metaTags.webAppTitle).toBe('血圧記録');
-        expect(metaTags.touchIcon).toBe('/icons/icon-192.svg');
+        expect(metaTags.touchIcon).toBe('/icons/icon-192.png');
 
         expect(pageErrors.length).toBe(0);
     }, 60000);

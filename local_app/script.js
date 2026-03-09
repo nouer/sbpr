@@ -425,6 +425,10 @@ function initForm() {
     if (saveNoMedicationBtn) {
         saveNoMedicationBtn.addEventListener('click', saveNoMedicationRecord);
     }
+
+    document.getElementById('clear-memo-btn').addEventListener('click', () => {
+        document.getElementById('input-memo').value = '';
+    });
 }
 
 /**
@@ -1112,7 +1116,7 @@ function updateChartContinuous(ctx, records) {
                                 const idx = items[0].dataIndex;
                                 const rec = allRecords[idx];
                                 if (rec && rec.memo) {
-                                    return ['', 'メモ: ' + rec.memo];
+                                    return ['', ...('メモ: ' + rec.memo).split('\n')];
                                 }
                             }
                             return [];
@@ -1346,7 +1350,7 @@ function updateChartDayNight(ctx, records) {
                                     memo = rec && rec.memo;
                                 }
                                 if (memo) {
-                                    return ['', 'メモ: ' + memo];
+                                    return ['', ...('メモ: ' + memo).split('\n')];
                                 }
                             }
                             return [];

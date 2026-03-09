@@ -18,7 +18,13 @@ sbpr/
 │   ├── bp.calc.js       # 血圧関連の計算ロジック（純粋関数）
 │   ├── bp.calc.test.js  # 単体テスト
 │   ├── e2e.test.js      # E2Eテスト
-│   └── version.js       # ビルド時自動生成
+│   ├── sw.js            # Service Worker
+│   ├── version.js       # ビルド時自動生成
+│   ├── manifest.json    # PWA Web App Manifest
+│   ├── api/
+│   │   └── openai.js    # Vercel Serverless Function（OpenAI proxy）
+│   └── icons/           # PWAアイコン（SVG）
+├── api/                 # Vercel Functions（ルートレベル）
 ├── docs/                # ドキュメント
 ├── scripts/             # ビルドスクリプト
 ├── nginx/               # nginx設定
@@ -58,9 +64,10 @@ sbpr/
 
 ### 3.1 画面一覧（タブ構成）
 1. **記録タブ**: 血圧入力フォーム + 直近の記録一覧
-2. **グラフタブ**: 血圧推移グラフ + 期間選択
+2. **グラフタブ**: 血圧推移グラフ + 期間選択 + 表示モード切替
 3. **履歴タブ**: 全記録一覧 + フィルタ・検索
-4. **設定タブ**: データ管理（エクスポート/インポート）+ バージョン情報
+4. **AI診断タブ**: AI健康アドバイス（API Key設定時のみ表示）
+5. **設定タブ**: データ管理（エクスポート/インポート）+ プロフィール + AI設定 + エクスポートリマインダー
 
 ### 3.2 固定UI要素
 * **左上: ページ先頭へ戻るボタン** (`position: fixed`): 上矢印SVGアイコン、クリックでスムーズスクロールによりページ先頭へ移動
@@ -86,7 +93,7 @@ sbpr/
 
 ### 5.2 Service Worker キャッシュ戦略
 * **戦略**: Cache First + Network Fallback
-* **プリキャッシュ対象**: index.html, style.css, script.js, bp.calc.js, version.js, manifest.json, アイコン, Chart.js CDN, html2pdf.js CDN
+* **プリキャッシュ対象**: index.html, style.css, script.js, bp.calc.js, version.js, manifest.json, アイコン(PNG), Chart.js CDN, chartjs-adapter-date-fns CDN
 * **除外**: OpenAI API リクエスト（/openai/）
 * **更新**: `CACHE_NAME` のバージョンを変更することでキャッシュを刷新
 
@@ -96,6 +103,27 @@ sbpr/
 * 記録が存在する場合、バッジをクリア
 * Badge API非対応ブラウザでは何もしない
 
-## 6. 外部ライブラリ（更新）
-* **Chart.js** (v4.x): グラフ描画 (CDN経由)
-* **Chart.js date-fns adapter**: 日付軸対応
+## 6. エクスポート/インポート
+
+### 6.1 エクスポートデータ構造
+* レコードデータ + メタ情報（バージョン、日時）
+* プロフィール情報（生年月日、性別、身長）
+* AI関連設定（備考、利用モデル）
+* グラフ設定（日中/夜間の開始時刻）
+
+### 6.2 インポート
+* IDベースの重複排除によるマージ
+* プロフィール・AI設定の復元
+
+## 7. AI診断機能
+
+### 7.1 概要
+* OpenAI API を利用した健康アドバイス機能
+* ユーザー自身のAPI Keyで利用（設定タブで入力）
+* 複数モデル対応（gpt-4o-mini〜gpt-5.2）
+* ストリーミング表示（SSE）
+* 会話継続（チャット形式）+ 提案質問（サジェスト）
+
+### 7.2 API通信
+* 同一オリジンのリバースプロキシ経由で通信（CORS対策）
+* ローカル: nginx、Vercel: rewrite + Serverless Function
