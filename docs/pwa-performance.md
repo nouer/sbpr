@@ -180,3 +180,48 @@ console.log(performance.getEntriesByName('app-init')[0].duration);
 | TTI (Time to Interactive) | `document.body.dataset.appReady` の設定タイミング |
 | スクリプト読み込み | Network タブのウォーターフォール |
 | IndexedDB呼び出し回数 | `getAllRecords` にログを仕込んで確認 |
+
+---
+
+## 8. iOSスプラッシュ画面対応
+
+iOSではPWAスタンドアロンモードで `apple-touch-startup-image` メタタグがないとスプラッシュ画面が表示されず黒画面になる。
+
+### 仕組み
+
+- `<link rel="apple-touch-startup-image">` にmedia queryを付けてデバイスごとの画像を指定
+- media queryは `device-width`, `device-height`, `-webkit-device-pixel-ratio` の組み合わせ
+
+### 画像生成
+
+`scripts/generate_splash.py` で `local_app/icons/icon-512.png` をベースにスプラッシュ画像を自動生成。
+
+```bash
+python3 scripts/generate_splash.py
+```
+
+### 新デバイス追加手順
+
+1. `scripts/generate_splash.py` の `SPLASH_SIZES` に新サイズを追加
+2. `python3 scripts/generate_splash.py` を実行
+3. `local_app/index.html` に `<link rel="apple-touch-startup-image">` タグを追加
+4. `local_app/sw.js` の `PRECACHE_ASSETS` に新画像パスを追加
+5. ビルド実行
+
+---
+
+## 9. インラインクリティカルCSS
+
+外部CSS読み込み前にabove-the-foldのUIを即座に描画するため、`index.html` の `<head>` 内にインラインCSSを挿入。
+
+### 対象
+- `body` 背景色・フォント
+- `.app-header` ヘッダーバー
+- `.tab-nav` タブナビゲーション
+- `.tab-content` タブ表示制御
+- `.card` カードコンテナ
+- `.loading-spinner` ローディングスピナー
+
+### 注意点
+- `style.css` の対応スタイルを変更した場合、インラインCSSも同期すること
+- `body[data-app-ready="true"] .loading-spinner { display: none }` でアプリ準備完了後にスピナーを非表示
