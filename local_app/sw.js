@@ -3,7 +3,7 @@
  * アセットキャッシュによる完全オフライン対応
  */
 
-const CACHE_NAME = 'sbpr-v1.0.0-1773019560';
+const CACHE_NAME = 'sbpr-v1.0.0-1773022044';
 
 const PRECACHE_ASSETS = [
     '/',
@@ -52,6 +52,10 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (url.pathname === '/notify.html') {
+        return;
+    }
+
+    if (url.pathname === '/manual.html' || url.pathname === '/promotion.html' || url.pathname === '/usecases_showcase.html') {
         return;
     }
 

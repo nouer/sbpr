@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプル血圧記録 (sbpr) ユーザーマニュアル -- シンプル血圧記録</title>
+    <meta name="description" content="2. 記録タブ - 血圧を記録する">
+    <meta property="og:title" content="シンプル血圧記録 (sbpr) ユーザーマニュアル -- シンプル血圧記録">
+    <meta property="og:description" content="2. 記録タブ - 血圧を記録する">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ja_JP">
+    <style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, 'Noto Sans CJK JP', sans-serif;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #1a1a1a;
+    background-color: #f8f8f8;
+}
+
+.container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 32px 64px;
+    background-color: #fff;
+    min-height: 100vh;
+}
+
+nav.back-link {
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+nav.back-link a {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+nav.back-link a:hover {
+    text-decoration: underline;
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1.2em;
+    padding-bottom: 0.4em;
+    border-bottom: 2px solid #2563eb;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin-top: 2em;
+    margin-bottom: 0.6em;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid #ccc;
+}
+
+h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 1.5em;
+    margin-bottom: 0.4em;
+}
+
+h4 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 1em;
+    margin-bottom: 0.3em;
+}
+
+p {
+    margin: 0.6em 0;
+    text-align: justify;
+}
+
+ul, ol {
+    margin: 0.6em 0;
+    padding-left: 2em;
+}
+
+li {
+    margin: 0.3em 0;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: 15px;
+}
+
+th, td {
+    border: 1px solid #999;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #eff6ff;
+    font-weight: bold;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 2em 0;
+}
+
+code {
+    font-size: 14px;
+    background-color: #f5f5f5;
+    padding: 0.15em 0.3em;
+    border-radius: 3px;
+}
+
+pre {
+    background-color: #f5f5f5;
+    padding: 1em;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.4;
+    border-radius: 4px;
+}
+
+pre code {
+    background: none;
+    padding: 0;
+}
+
+blockquote {
+    border-left: 3px solid #2563eb;
+    margin: 0.8em 0;
+    padding: 0.2em 0 0.2em 1em;
+    color: #555;
+}
+
+strong {
+    font-weight: bold;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0.5em auto;
+}
+
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+sub {
+    font-size: 12px;
+    color: #888;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 16px 16px 48px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    h2 {
+        font-size: 19px;
+    }
+
+    h3 {
+        font-size: 16px;
+    }
+
+    table {
+        font-size: 13px;
+    }
+
+    th, td {
+        padding: 6px 8px;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="back-link">
+            <a href="/">&larr; アプリに戻る</a>
+        </nav>
+        <h1>シンプル血圧記録 (sbpr) ユーザーマニュアル</h1>
+        <h2>目次</h2>
+        <ol>
+        <li><a href="#1-%E3%81%AF%E3%81%98%E3%82%81%E3%81%AB">はじめに</a></li>
+        <li><a href="#2-%E8%A8%98%E9%8C%B2%E3%82%BF%E3%83%96---%E8%A1%80%E5%9C%A7%E3%82%92%E8%A8%98%E9%8C%B2%E3%81%99%E3%82%8B">記録タブ - 血圧を記録する</a></li>
+        <li><a href="#3-%E8%A8%98%E9%8C%B2%E3%82%BF%E3%83%96---%E7%9B%B4%E8%BF%91%E3%81%AE%E8%A8%98%E9%8C%B2">記録タブ - 直近の記録</a></li>
+        <li><a href="#4-%E8%A8%98%E9%8C%B2%E3%81%AE%E7%B7%A8%E9%9B%86">記録の編集</a></li>
+        <li><a href="#5-%E3%82%B0%E3%83%A9%E3%83%95%E3%82%BF%E3%83%96---%E9%80%A3%E7%B6%9A%E3%83%A2%E3%83%BC%E3%83%89">グラフタブ - 連続モード</a></li>
+        <li><a href="#6-%E3%82%B0%E3%83%A9%E3%83%95%E3%82%BF%E3%83%96---%E6%97%A5%E4%B8%AD%E5%A4%9C%E9%96%93%E3%83%A2%E3%83%BC%E3%83%89">グラフタブ - 日中・夜間モード</a></li>
+        <li><a href="#7-%E3%82%B0%E3%83%A9%E3%83%95%E3%82%BF%E3%83%96---%E7%B5%B1%E8%A8%88%E6%83%85%E5%A0%B1">グラフタブ - 統計情報</a></li>
+        <li><a href="#8-%E5%B1%A5%E6%AD%B4%E3%82%BF%E3%83%96">履歴タブ</a></li>
+        <li><a href="#9-%E8%A8%AD%E5%AE%9A%E3%82%BF%E3%83%96---%E3%83%87%E3%83%BC%E3%82%BF%E7%AE%A1%E7%90%86">設定タブ - データ管理</a></li>
+        <li><a href="#10-%E8%A8%AD%E5%AE%9A%E3%82%BF%E3%83%96---%E3%83%97%E3%83%AD%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB">設定タブ - プロフィール</a></li>
+        <li><a href="#11-%E8%A8%AD%E5%AE%9A%E3%82%BF%E3%83%96---%E3%82%B0%E3%83%A9%E3%83%95%E8%A8%AD%E5%AE%9A">設定タブ - グラフ設定</a></li>
+        <li><a href="#12-%E8%A8%AD%E5%AE%9A%E3%82%BF%E3%83%96---ai%E8%A8%BA%E6%96%AD%E8%A8%AD%E5%AE%9A">設定タブ - AI診断設定</a></li>
+        <li><a href="#13-%E8%A8%AD%E5%AE%9A%E3%82%BF%E3%83%96---%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B">設定タブ - お知らせ</a></li>
+        <li><a href="#14-%E8%A8%AD%E5%AE%9A%E3%82%BF%E3%83%96---%E3%82%A2%E3%83%97%E3%83%AA%E6%83%85%E5%A0%B1">設定タブ - アプリ情報</a></li>
+        <li><a href="#15-ai%E8%A8%BA%E6%96%AD%E3%82%BF%E3%83%96">AI診断タブ</a></li>
+        <li><a href="#16-pwa%E5%AF%BE%E5%BF%9C%E3%83%9B%E3%83%BC%E3%83%A0%E7%94%BB%E9%9D%A2%E3%81%AB%E8%BF%BD%E5%8A%A0">PWA対応（ホーム画面に追加）</a></li>
+        </ol>
+        <hr />
+        <h2>1. はじめに</h2>
+        <p>「シンプル血圧記録（sbpr）」は、日々の血圧測定データをブラウザ上で記録・管理できるWebアプリです。</p>
+        <p><strong>主な機能:</strong></p>
+        <ul>
+        <li>血圧（最高・最低）、脈拍、体重、気分、体調、メモの記録</li>
+        <li><strong>服薬しなかった日の記録</strong>（血圧測定なしで記録可能）</li>
+        <li>グラフによる推移表示（連続 / 日中・夜間 / 日中のみ / 夜間のみモード）</li>
+        <li>統計情報の自動計算</li>
+        <li>記録履歴の一覧・日付フィルタ</li>
+        <li>データのエクスポート/インポート（JSON形式）</li>
+        <li>AI健康アドバイス（OpenAI API連携）</li>
+        <li>PWA対応（ホーム画面に追加してオフライン利用可能）</li>
+        </ul>
+        <p><strong>データの保存先:</strong> ブラウザの IndexedDB にローカル保存されます。サーバーへの送信はありません（AI診断機能を利用する場合、血圧データがOpenAI社のAPIに送信されます）。</p>
+        <hr />
+        <h2>2. 記録タブ - 血圧を記録する</h2>
+        <p>アプリを開くと最初に表示されるのが記録タブです。</p>
+        <p><img src="/docs-images/01_record_form.png" alt="記録フォーム" /></p>
+        <h3>入力項目</h3>
+        <table>
+        <thead>
+        <tr>
+        <th>項目</th>
+        <th>必須</th>
+        <th>説明</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>測定日時</td>
+        <td>-</td>
+        <td>自動で現在日時がセットされます。変更も可能です</td>
+        </tr>
+        <tr>
+        <td>最高血圧</td>
+        <td>必須</td>
+        <td>収縮期血圧（mmHg）。50〜300の範囲</td>
+        </tr>
+        <tr>
+        <td>最低血圧</td>
+        <td>必須</td>
+        <td>拡張期血圧（mmHg）。30〜200の範囲</td>
+        </tr>
+        <tr>
+        <td>脈拍数</td>
+        <td>任意</td>
+        <td>心拍数（bpm）。30〜250の範囲</td>
+        </tr>
+        <tr>
+        <td>体重</td>
+        <td>任意</td>
+        <td>体重（kg）。0.1kg単位で入力可能</td>
+        </tr>
+        <tr>
+        <td>気分</td>
+        <td>任意</td>
+        <td>良い / 普通 / 悪い の3段階。タップで選択・もう一度タップで解除</td>
+        </tr>
+        <tr>
+        <td>体調</td>
+        <td>任意</td>
+        <td>良い / 普通 / 悪い の3段階</td>
+        </tr>
+        <tr>
+        <td>メモ</td>
+        <td>任意</td>
+        <td>服薬状況などを自由記入</td>
+        </tr>
+        </tbody>
+        </table>
+        <h3>操作方法</h3>
+        <ol>
+        <li>各項目を入力します</li>
+        <li>「記録を保存」ボタンをタップします</li>
+        <li>保存中はボタンが「保存中...」に変わり、成功するとボタン直下に「記録を保存しました」と表示され、ボタンが一時「保存しました」に変わってから元に戻ります</li>
+        <li>フォームには直前の記録の値がプリフィルされるため、変化のある値だけ修正して素早く記録できます</li>
+        </ol>
+        <blockquote>
+        <p><strong>ヒント:</strong> 入力欄をタップすると値が全選択されるので、そのまま新しい値を入力すれば上書きできます。</p>
+        </blockquote>
+        <h3>服薬しなかった日を記録</h3>
+        <p>血圧を測っていない日でも、服薬忘れだけを記録できます。</p>
+        <ol>
+        <li>「服薬しなかった日を記録」カードで<strong>日付</strong>を選択します（メモは任意）</li>
+        <li>「服薬なしで保存」ボタンをタップします</li>
+        <li>保存中はボタンが「保存中...」に変わり、成功するとボタン直下に「服薬なしの記録を保存しました」と表示され、ボタンが一時「保存しました」に変わってから元に戻ります</li>
+        <li>同一の日付に既に服薬なしの記録がある場合は「既に記録済み」と表示され、重複は保存されません</li>
+        </ol>
+        <p>直近の記録・履歴では「服薬なし」として表示され、グラフでは該当日にマーカー（三角形）で表示されます。編集・削除は通常の記録と同様に行えます。</p>
+        <hr />
+        <h2>3. 記録タブ - 直近の記録</h2>
+        <p>記録フォームの下に、直近10件の記録が一覧表示されます。</p>
+        <p><img src="/docs-images/02_record_recent.png" alt="直近の記録" /></p>
+        <p>各記録には以下の情報が表示されます:</p>
+        <ul>
+        <li><strong>血圧値</strong>（赤: 最高 / 青: 最低）</li>
+        <li><strong>測定日時</strong></li>
+        <li><strong>血圧分類</strong>（色付きバッジ）
+        <ul>
+        <li>正常血圧（緑）</li>
+        <li>正常高値血圧（水色）</li>
+        <li>高値血圧（黄色）</li>
+        <li>I度高血圧（オレンジ）</li>
+        <li>II度高血圧（赤）</li>
+        <li>III度高血圧（濃い赤）</li>
+        </ul>
+        </li>
+        <li><strong>脈拍</strong>、<strong>体重</strong>、<strong>気分</strong>、<strong>体調</strong>、<strong>メモ</strong>（入力がある場合）</li>
+        <li><strong>編集ボタン</strong>（鉛筆アイコン）/ <strong>削除ボタン</strong>（×アイコン）</li>
+        </ul>
+        <p>「服薬しなかった日を記録」で保存した日は、血圧値の代わりに<strong>服薬なし</strong>と表示されます。</p>
+        <hr />
+        <h2>4. 記録の編集</h2>
+        <p>記録の鉛筆アイコンをタップすると編集ダイアログが開きます。</p>
+        <p><img src="/docs-images/11_edit_dialog.png" alt="編集ダイアログ" /></p>
+        <h3>操作方法</h3>
+        <ol>
+        <li>直近の記録一覧、または履歴タブで鉛筆アイコンをタップ</li>
+        <li>編集ダイアログが表示され、現在の値が入力欄にセットされます</li>
+        <li>値を修正します</li>
+        <li>「保存」をタップして更新、または「キャンセル」で取り消し</li>
+        </ol>
+        <blockquote>
+        <p><strong>服薬なし記録の編集:</strong> 「服薬しなかった日」の記録を編集する場合、編集できるのは「日付」と「メモ」のみです。血圧値の入力欄は表示されません。</p>
+        </blockquote>
+        <h3>記録の削除</h3>
+        <p>記録の×ボタンをタップすると確認ダイアログが表示されます。「削除」をタップすると記録が削除されます。</p>
+        <hr />
+        <h2>5. グラフタブ - 連続モード</h2>
+        <p>画面上部の「グラフ」タブをタップするとグラフが表示されます。初期状態では「連続」モードが選択されています。</p>
+        <p><img src="/docs-images/03_chart_continuous.png" alt="連続モードグラフ" /></p>
+        <h3>グラフの見方</h3>
+        <ul>
+        <li><strong>赤色の実線</strong>: 最高血圧（mmHg）- 左軸</li>
+        <li><strong>青色の実線</strong>: 最低血圧（mmHg）- 左軸</li>
+        <li><strong>緑色の点線</strong>: 脈拍（bpm）- 右軸</li>
+        <li><strong>赤色の横破線</strong>: 基準線 135 mmHg（家庭血圧の高血圧基準）</li>
+        <li><strong>青色の横破線</strong>: 基準線 85 mmHg（家庭血圧の高血圧基準）</li>
+        <li><strong>ポイントの大きさ</strong>: メモが付いている記録の日付は、ポイントが少し大きめに表示されます。</li>
+        <li><strong>服薬なし</strong>: 「服薬しなかった日を記録」で保存した日は、グラフ下部に<strong>三角形マーカー</strong>（凡例「服薬なし」）で表示されます。</li>
+        <li><strong>ツールチップ</strong>: グラフ上のポイントをタップ/クリックすると日付と数値が表示されます。その日付にメモがある場合は「メモ: …」も一緒に表示されます。同じポイントを再度タップするとツールチップが閉じます。</li>
+        </ul>
+        <h3>期間の切り替え</h3>
+        <p>期間ボタンで表示範囲を変更できます:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>ボタン</th>
+        <th>表示範囲</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>7日</td>
+        <td>直近7日間（デフォルト）</td>
+        </tr>
+        <tr>
+        <td>30日</td>
+        <td>直近30日間</td>
+        </tr>
+        <tr>
+        <td>90日</td>
+        <td>直近90日間</td>
+        </tr>
+        <tr>
+        <td>全期間</td>
+        <td>全ての記録</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr />
+        <h2>6. グラフタブ - 日中・夜間モード</h2>
+        <p>「日中・夜間」ボタンをタップすると、日中と夜間のデータが色分けされて表示されます。</p>
+        <p><img src="/docs-images/04_chart_daynight.png" alt="日中・夜間モードグラフ" /></p>
+        <h3>線の色と種類</h3>
+        <table>
+        <thead>
+        <tr>
+        <th>データ</th>
+        <th>色</th>
+        <th>線の種類</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>日中 最高血圧</td>
+        <td>赤（濃）</td>
+        <td>実線</td>
+        </tr>
+        <tr>
+        <td>日中 最低血圧</td>
+        <td>青（濃）</td>
+        <td>実線</td>
+        </tr>
+        <tr>
+        <td>日中 脈拍</td>
+        <td>緑（濃）</td>
+        <td>点線</td>
+        </tr>
+        <tr>
+        <td>夜間 最高血圧</td>
+        <td>赤（薄）</td>
+        <td>破線</td>
+        </tr>
+        <tr>
+        <td>夜間 最低血圧</td>
+        <td>青（薄）</td>
+        <td>破線</td>
+        </tr>
+        <tr>
+        <td>夜間 脈拍</td>
+        <td>緑（薄）</td>
+        <td>破線点線</td>
+        </tr>
+        </tbody>
+        </table>
+        <h3>使い方</h3>
+        <ol>
+        <li>グラフタブ上部の「日中・夜間」ボタンをタップ</li>
+        <li>日中データ（実線）と夜間データ（破線）が色分けされて表示されます</li>
+        <li>「連続」ボタンをタップすると元の表示に戻ります</li>
+        <li>「日中のみ」「夜間のみ」ボタンで、該当時間帯のデータだけを表示できます</li>
+        <li>期間切り替え（7日/30日/90日/全期間）はモードに関係なく使えます</li>
+        </ol>
+        <blockquote>
+        <p><strong>ボタンの色の区別:</strong> モード選択ボタン（連続/日中・夜間/日中のみ/夜間のみ）と期間選択ボタン（7日/30日/90日/全期間）は異なる色で表示されるため、直感的に操作できます。</p>
+        </blockquote>
+        <p>日中・夜間モードでは、破線（非メイン）側のデータは薄い色で表示され、メインの実線データが見やすくなっています。</p>
+        <p>日中・夜間モードでも、メモ付きの記録はポイントが大きめに表示され、ツールチップにメモが表示されます。</p>
+        <blockquote>
+        <p><strong>ヒント:</strong> 日中・夜間の時間帯は設定タブの「グラフ設定」から変更できます（<a href="#11-%E8%A8%AD%E5%AE%9A%E3%82%BF%E3%83%96---%E3%82%B0%E3%83%A9%E3%83%95%E8%A8%AD%E5%AE%9A">11. グラフ設定</a>を参照）。</p>
+        </blockquote>
+        <h3>線種の切り替え</h3>
+        <p>日中・夜間モードでは、グラフ上部に線種切り替えトグルが表示されます。</p>
+        <table>
+        <thead>
+        <tr>
+        <th>トグル状態</th>
+        <th>日中データ</th>
+        <th>夜間データ</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>OFF（デフォルト）</td>
+        <td>実線</td>
+        <td>破線</td>
+        </tr>
+        <tr>
+        <td>ON</td>
+        <td>破線</td>
+        <td>実線</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>トグルを切り替えることで、注目したいデータ（日中または夜間）を実線で強調して表示できます。連続モードではこのトグルは表示されません。</p>
+        <hr />
+        <h2>7. グラフタブ - 統計情報</h2>
+        <p>グラフの下に、選択した期間の統計情報が表示されます。</p>
+        <p><img src="/docs-images/05_chart_stats.png" alt="統計情報" /></p>
+        <h3>表示項目</h3>
+        <table>
+        <thead>
+        <tr>
+        <th>項目</th>
+        <th>説明</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>平均 最高血圧</td>
+        <td>表示期間内の最高血圧の平均値</td>
+        </tr>
+        <tr>
+        <td>平均 最低血圧</td>
+        <td>表示期間内の最低血圧の平均値</td>
+        </tr>
+        <tr>
+        <td>平均 脈拍</td>
+        <td>表示期間内の脈拍の平均値</td>
+        </tr>
+        <tr>
+        <td>記録数</td>
+        <td>表示期間内の記録件数と記録日数（「○件 / ○日間」形式）</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>統計情報は期間ボタンの切り替えに連動して自動更新されます。</p>
+        <hr />
+        <h2>8. 履歴タブ</h2>
+        <p>「履歴」タブをタップすると、全ての記録が新しい順に一覧表示されます。</p>
+        <p><img src="/docs-images/06_history_tab.png" alt="履歴タブ" /></p>
+        <h3>日付フィルタ</h3>
+        <p>画面上部の日付入力欄で期間を絞り込めます:</p>
+        <ol>
+        <li>開始日・終了日を入力すると、その期間の記録のみ表示されます</li>
+        <li>「クリア」ボタンで絞り込みを解除します</li>
+        </ol>
+        <h3>各記録の操作</h3>
+        <p>記録タブと同様に、各記録の鉛筆アイコンで編集、×ボタンで削除ができます。</p>
+        <hr />
+        <h2>9. 設定タブ - データ管理</h2>
+        <p>「設定」タブの最上部にデータ管理機能があります。</p>
+        <p><img src="/docs-images/07_settings_data.png" alt="データ管理" /></p>
+        <h3>データエクスポート</h3>
+        <p>「エクスポート」ボタンをタップすると、全ての記録データがJSON形式でダウンロードされます。</p>
+        <p>エクスポートファイルには以下が含まれます:</p>
+        <ul>
+        <li>全ての血圧記録データ</li>
+        <li>プロフィール情報</li>
+        <li>AI備考</li>
+        <li>AIモデル設定</li>
+        <li>グラフ設定（日中・夜間の時間帯）</li>
+        </ul>
+        <blockquote>
+        <p><strong>バックアップとして定期的にエクスポートすることを推奨します。</strong></p>
+        </blockquote>
+        <h3>データインポート</h3>
+        <p>「インポート」ボタンをタップしてJSONファイルを選択すると、データが復元されます。</p>
+        <ul>
+        <li>既存データとマージ（統合）されます</li>
+        <li>同じIDの記録は重複せずスキップされます</li>
+        <li>プロフィール、AI設定、グラフ設定も復元されます</li>
+        </ul>
+        <h3>全データ削除</h3>
+        <p>「全データ削除」ボタンをタップすると、確認ダイアログが表示されます。実行すると全ての記録データが削除されます。<strong>この操作は取り消せません。</strong></p>
+        <h3>エクスポート通知</h3>
+        <p>指定期間（デフォルト7日）エクスポートを行っていない場合、アプリ起動時や画面表示時に通知バナーを表示します。バックアップ漏れを防ぐための機能です。</p>
+        <ul>
+        <li><strong>通知間隔</strong>: 3日 / 7日 / 14日 / 30日 から選択可能</li>
+        <li><strong>通知の有効化</strong>: チェックボックスでオン/オフを切り替え可能</li>
+        <li>設定を変更したら「保存」ボタンをタップしてください</li>
+        </ul>
+        <hr />
+        <h2>10. 設定タブ - プロフィール</h2>
+        <p>身体情報を設定できます。設定した情報はAI診断のプロンプトに含まれ、より正確なアドバイスに活用されます。</p>
+        <p><img src="/docs-images/08_settings_profile.png" alt="プロフィール設定" /></p>
+        <h3>設定項目</h3>
+        <table>
+        <thead>
+        <tr>
+        <th>項目</th>
+        <th>説明</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>生年月日</td>
+        <td>年齢の自動計算に使用</td>
+        </tr>
+        <tr>
+        <td>性別</td>
+        <td>男性 / 女性 / その他</td>
+        </tr>
+        <tr>
+        <td>身長</td>
+        <td>cm単位。BMI計算等に利用</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>入力後「プロフィールを保存」ボタンをタップして保存します。</p>
+        <hr />
+        <h2>11. 設定タブ - グラフ設定</h2>
+        <p>日中・夜間グラフの時間帯区切りを設定します。</p>
+        <p><img src="/docs-images/09_settings_chart.png" alt="グラフ設定" /></p>
+        <h3>デフォルト値</h3>
+        <table>
+        <thead>
+        <tr>
+        <th>項目</th>
+        <th>デフォルト</th>
+        <th>説明</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>日中 開始</td>
+        <td>6時</td>
+        <td>この時刻以降の測定を「日中」として扱います</td>
+        </tr>
+        <tr>
+        <td>夜間 開始</td>
+        <td>18時</td>
+        <td>この時刻以降の測定を「夜間」として扱います</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>デフォルト設定の場合: 6:00〜17:59 → 日中、18:00〜翌5:59 → 夜間</p>
+        <h3>設定の変更方法</h3>
+        <ol>
+        <li>「日中 開始」に0〜23の整数を入力</li>
+        <li>「夜間 開始」に0〜23の整数を入力</li>
+        <li>「保存」ボタンをタップ</li>
+        <li>日中・夜間モードのグラフに即座に反映されます</li>
+        </ol>
+        <hr />
+        <h2>12. 設定タブ - AI診断設定</h2>
+        <p>AI健康アドバイス機能の設定を行います。</p>
+        <p><img src="/docs-images/10_settings_ai.png" alt="AI診断設定" /></p>
+        <h3>OpenAI APIキー</h3>
+        <p>AI診断機能を利用するにはOpenAI APIキーが必要です。</p>
+        <ol>
+        <li>APIキー入力欄に <code>sk-...</code> 形式のキーを入力</li>
+        <li>「APIキーを保存」をタップ</li>
+        <li>画面上部のタブに「AI診断」タブが表示されます</li>
+        </ol>
+        <blockquote>
+        <p>目のアイコンをタップするとAPIキーの表示/非表示を切り替えられます。</p>
+        </blockquote>
+        <h3>利用モデル</h3>
+        <p>AIモデルを選択できます。モデルにより価格・応答品質・最大コンテキストが異なります。選択は自動的に保存されます。</p>
+        <h3>AIに伝えたい備考</h3>
+        <p>通院情報、服薬状況、持病など、AI診断の際に参考にしてほしい情報を記入します。「備考を保存」をタップで保存されます。</p>
+        <hr />
+        <h2>13. 設定タブ - お知らせ</h2>
+        <p>お知らせ機能では、アプリの新機能やメンテナンス情報を受け取ることができます。</p>
+        <h3>お知らせの有効化</h3>
+        <ul>
+        <li>「お知らせを有効にする」チェックボックスでON/OFFを切り替えられます</li>
+        <li>ONにすると、新しいお知らせがある場合にアプリ起動時に通知されます</li>
+        <li>設定は自動的に保存されます</li>
+        </ul>
+        <h3>お知らせの確認</h3>
+        <p>「お知らせを見る」ボタンをタップすると、お知らせページが開きます。アプリの更新情報や重要なお知らせを確認できます。</p>
+        <hr />
+        <h2>14. 設定タブ - アプリ情報</h2>
+        <p>アプリのバージョン情報と更新確認機能があります。</p>
+        <p><img src="/docs-images/12_settings_appinfo.png" alt="アプリ情報" /></p>
+        <h3>表示項目</h3>
+        <ul>
+        <li>アプリ名</li>
+        <li>バージョン</li>
+        <li>ビルド日時</li>
+        <li>データ保存先</li>
+        </ul>
+        <h3>アプリの更新</h3>
+        <p>「更新を確認」ボタンをタップすると、新しいバージョンが利用可能か確認します。更新がある場合は画面上部に更新バナーが表示され、「今すぐ更新」をタップするとアプリが最新版に更新されます。</p>
+        <h3>強制更新</h3>
+        <p>「更新を確認」で最新バージョンと表示されるにもかかわらず、ビルド日時などが更新されない場合は「強制更新」ボタンをお使いください。</p>
+        <p>「強制更新」をタップすると、以下の処理が実行されます:</p>
+        <ol>
+        <li>Service Workerの登録解除</li>
+        <li>ブラウザキャッシュの完全削除</li>
+        <li>ページの再読み込み</li>
+        </ol>
+        <blockquote>
+        <p><strong>注意:</strong> 血圧記録データ（IndexedDB）は削除されません。アプリのキャッシュ（HTML/CSS/JS等）のみがクリアされます。</p>
+        </blockquote>
+        <hr />
+        <h2>15. AI診断タブ</h2>
+        <p>OpenAI APIキーを設定するとタブに「AI診断」が表示されます。血圧データに基づいたAI健康アドバイスを受けられます。</p>
+        <h3>使い方</h3>
+        <ol>
+        <li><strong>診断範囲を選択</strong>します（7日 / 30日 / 90日 / 全期間）。デフォルトは7日です</li>
+        <li>「診断を開始」ボタンをタップ</li>
+        <li>AIが選択した期間の血圧データを分析し、健康アドバイスを返します</li>
+        <li>追加の質問を入力欄から送信できます</li>
+        <li>AIからの回答末尾に提案質問が表示されるので、タップして続けることもできます</li>
+        <li>「会話をクリア」で会話をリセットできます</li>
+        </ol>
+        <blockquote>
+        <p><strong>注意:</strong> AI診断は医療行為ではありません。参考情報としてご利用ください。体調に不安がある場合は必ず医療機関を受診してください。</p>
+        </blockquote>
+        <h3>会話の保存</h3>
+        <ul>
+        <li>AI会話はブラウザに自動保存されます</li>
+        <li>アプリを閉じて再度開いても、前回の会話が復元されます</li>
+        <li>新しい血圧データが追加されると、次の質問時に自動的にAIに通知されます</li>
+        </ul>
+        <hr />
+        <h2>16. PWA対応（ホーム画面に追加）</h2>
+        <p>本アプリはPWA（Progressive Web App）に対応しており、スマートフォンのホーム画面に追加してネイティブアプリのように利用できます。</p>
+        <h3>ホーム画面への追加方法</h3>
+        <p><strong>iPhone (Safari):</strong></p>
+        <ol>
+        <li>アプリをSafariで開く</li>
+        <li>共有ボタン（四角に上矢印のアイコン）をタップ</li>
+        <li>「ホーム画面に追加」を選択</li>
+        </ol>
+        <p><strong>Android (Chrome):</strong></p>
+        <ol>
+        <li>アプリをChromeで開く</li>
+        <li>メニュー（三点アイコン）をタップ</li>
+        <li>「ホーム画面に追加」または「アプリをインストール」を選択</li>
+        </ol>
+        <h3>オフライン対応</h3>
+        <p>ホーム画面に追加すると、インターネット接続がなくてもアプリを使用できます（AI診断機能を除く）。</p>
+        <h3>アプリアイコンバッジ</h3>
+        <p>その日の記録がまだ行われていない場合、アプリアイコンにバッジ（数字の「1」）を表示して記録忘れを防止します（対応ブラウザのみ）。記録を行うとバッジは消えます。</p>
+        <hr />
+        <h2>関連ページ</h2>
+        <ul>
+        <li><a href="usecases_showcase.html">活用事例を見る →</a></li>
+        <li><a href="promotion.html">紹介ページ →</a></li>
+        </ul>
+        
+    </div>
+</body>
+</html>
