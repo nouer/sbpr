@@ -133,6 +133,7 @@ async function deleteAllRecords() {
 // ===== UI制御 =====
 
 let bpChart = null;
+let weightChart = null;
 let currentPeriod = 7;
 let currentChartMode = 'continuous';
 let lastTooltipIndex = null;
@@ -1003,6 +1004,7 @@ async function refreshChart() {
     const bpRecords = records.filter(r => isBPRecord(r));
     updateChart(records);
     updateStats(bpRecords);
+    updateWeightChart(records);
 }
 
 function updateChart(records) {
@@ -1497,6 +1499,78 @@ function updateStats(records) {
 /** 血圧記録のみに絞り込む（グラフ・統計用） */
 function filterBPRecords(records) {
     return (records || []).filter(r => isBPRecord(r));
+}
+
+function updateWeightChart(records) {
+    const ctx = document.getElementById('weight-chart');
+    if (!ctx) return;
+
+    if (weightChart) {
+        weightChart.destroy();
+        weightChart = null;
+    }
+
+    const weightRecords = records
+        .filter(r => r.weight != null)
+        .sort((a, b) => new Date(a.measuredAt) - new Date(b.measuredAt));
+
+    const emptyEl = document.getElementById('weight-chart-empty');
+    const containerEl = document.getElementById('weight-chart-container');
+
+    if (weightRecords.length === 0) {
+        if (emptyEl) emptyEl.style.display = '';
+        if (containerEl) containerEl.style.display = 'none';
+        return;
+    }
+
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (containerEl) containerEl.style.display = '';
+
+    weightChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: weightRecords.map(r => new Date(r.measuredAt)),
+            datasets: [{
+                label: '体重 (kg)',
+                data: weightRecords.map(r => r.weight),
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#8b5cf6',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(items) {
+                            if (items.length > 0) return formatDateTime(items[0].parsed.x);
+                            return '';
+                        },
+                        label: function(context) {
+                            return '体重: ' + context.parsed.y + ' kg';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: 'day', displayFormats: { day: 'MM/dd' } }
+                },
+                y: {
+                    title: { display: true, text: 'kg' },
+                    grid: { color: 'rgba(0,0,0,0.06)' }
+                }
+            }
+        }
+    });
 }
 
 // ===== 履歴 =====

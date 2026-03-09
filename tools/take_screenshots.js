@@ -160,6 +160,16 @@ async function main() {
     await takeScreenshot(page, '05_chart_stats.png');
 
 
+    // 05b: Weight chart
+    console.log('Taking 05b_chart_weight.png...');
+    const weightCardCount = await page.locator('#weight-chart-card').count();
+    if (weightCardCount > 0) {
+        await page.locator('#weight-chart-card').evaluate(el => el.scrollIntoView({ block: 'start' }));
+    }
+    await sleep(300);
+    await takeScreenshot(page, '05b_chart_weight.png');
+
+
     // 06: History tab
     console.log('Taking 06_history_tab.png...');
     await page.click('[data-tab="history"]');

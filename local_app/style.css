@@ -643,6 +643,10 @@ body {
     min-height: 300px;
 }
 
+.chart-container-sm {
+    min-height: 200px;
+}
+
 .chart-controls {
     display: flex;
     gap: 8px;
