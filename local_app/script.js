@@ -1721,6 +1721,7 @@ async function importData(event) {
         if (data.aiMemo != null) parts.push('AI備考を復元しました');
         if (data.aiModel != null) parts.push('AIモデル設定を復元しました');
         if (data.chartSettings) parts.push('グラフ設定を復元しました');
+        saveLastExportAt();
         showToast(parts.join('。'), 'success');
         await refreshAll();
     } catch (error) {
