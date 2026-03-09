@@ -4,7 +4,9 @@
   "description": "シンプル血圧測定記録 (Simple Blood Pressure Recorder)",
   "main": "local_app/script.js",
   "scripts": {
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "test:pw": "npx playwright test",
+    "screenshots": "node tools/take_screenshots.js"
   },
   "jest": {
     "testEnvironment": "jsdom",
@@ -16,16 +18,18 @@
         "displayName": "unit",
         "testEnvironment": "jsdom",
         "testMatch": ["**/*.calc.test.js"],
-        "testPathIgnorePatterns": ["local_app/e2e.test.js"]
+        "testPathIgnorePatterns": ["local_app/e2e.test.js", "tests/"]
       },
       {
         "displayName": "e2e",
         "testEnvironment": "node",
-        "testMatch": ["**/e2e.test.js"]
+        "testMatch": ["**/e2e.test.js"],
+        "testPathIgnorePatterns": ["tests/"]
       }
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.50.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "puppeteer": "^21.5.0"

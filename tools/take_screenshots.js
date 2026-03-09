@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+const { chromium } = require('playwright');
 const path = require('path');
 
 const APP_URL = `http://${process.env.E2E_APP_IP || '172.31.0.10'}`;
@@ -10,21 +10,17 @@ async function sleep(ms) {
 }
 
 async function main() {
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        executablePath: '/usr/bin/chromium-browser',
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    });
+    const browser = await chromium.launch();
 
     const page = await browser.newPage();
-    await page.setViewport(VIEWPORT);
+    await page.setViewportSize(VIEWPORT);
 
     await page.goto(APP_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await sleep(3000);
 
     // Add sample data via form submission (same approach as E2E tests)
     console.log('Injecting sample data via form...');
-    await page.waitForSelector('#input-systolic', { timeout: 15000 });
+    await page.locator('#input-systolic').waitFor({ timeout: 15000 });
 
     const records = [
         { dt:'2026-02-15T07:30', sys:128, dia:82, pul:68, wt:'68.3', memo:'' },
@@ -65,16 +61,16 @@ async function main() {
         document.getElementById('no-medication-date').value = '2026-02-22';
         document.getElementById('no-medication-memo').value = '';
     });
-    const noMedBtn = await page.$('#save-no-medication-btn');
-    if (noMedBtn) {
-        await noMedBtn.click();
+    const noMedBtnCount = await page.locator('#save-no-medication-btn').count();
+    if (noMedBtnCount > 0) {
+        await page.click('#save-no-medication-btn');
         await sleep(500);
     }
 
     console.log('Sample data injected.');
 
     // Reload to show data
-    await page.goto(APP_URL, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.goto(APP_URL, { waitUntil: 'networkidle', timeout: 30000 });
     await sleep(1500);
 
     // Hide banners via JS instead of clicking
@@ -96,9 +92,9 @@ async function main() {
 
     // 02: Recent records
     console.log('Taking 02_record_recent.png...');
-    const recentHeader = await page.$('.recent-header, h3');
-    if (recentHeader) {
-        await page.evaluate(el => el.scrollIntoView({ block: 'start' }), recentHeader);
+    const recentHeaderCount = await page.locator('.recent-header, h3').count();
+    if (recentHeaderCount > 0) {
+        await page.locator('.recent-header, h3').first().evaluate(el => el.scrollIntoView({ block: 'start' }));
     } else {
         await page.evaluate(() => window.scrollTo(0, 800));
     }
@@ -110,9 +106,9 @@ async function main() {
     await page.click('[data-tab="chart"]');
     await sleep(1000);
     // Click 30-day button
-    const periodBtns = await page.$$('.period-btn, [data-period]');
+    const periodBtns = await page.locator('.period-btn, [data-period]').all();
     for (const btn of periodBtns) {
-        const text = await page.evaluate(el => el.textContent.trim(), btn);
+        const text = await btn.evaluate(el => el.textContent.trim());
         if (text === '30日') {
             await btn.click();
             break;
@@ -125,9 +121,9 @@ async function main() {
 
     // 04: Chart day/night
     console.log('Taking 04_chart_daynight.png...');
-    const modeBtns = await page.$$('.mode-btn, [data-mode]');
+    const modeBtns = await page.locator('.mode-btn, [data-mode]').all();
     for (const btn of modeBtns) {
-        const text = await page.evaluate(el => el.textContent.trim(), btn);
+        const text = await btn.evaluate(el => el.textContent.trim());
         if (text === '日中・夜間') {
             await btn.click();
             break;
@@ -140,9 +136,9 @@ async function main() {
 
     // 05: Chart stats
     console.log('Taking 05_chart_stats.png...');
-    const statsSection = await page.$('.stats-container, .chart-stats, #stats-section');
-    if (statsSection) {
-        await page.evaluate(el => el.scrollIntoView({ block: 'start' }), statsSection);
+    const statsSectionCount = await page.locator('.stats-container, .chart-stats, #stats-section').count();
+    if (statsSectionCount > 0) {
+        await page.locator('.stats-container, .chart-stats, #stats-section').first().evaluate(el => el.scrollIntoView({ block: 'start' }));
     } else {
         await page.evaluate(() => window.scrollTo(0, 600));
     }
@@ -238,13 +234,17 @@ async function main() {
     await page.screenshot({ path: path.join(OUTPUT_DIR, '11_edit_dialog.png') });
     // Close dialog via JS
     await page.evaluate(() => {
+        // Try clicking cancel button
         const btns = document.querySelectorAll('button');
         for (const btn of btns) {
             if (btn.textContent.trim() === 'キャンセル') {
                 btn.click();
-                return;
+                break;
             }
         }
+        // Force close overlay if still open
+        const overlay = document.getElementById('edit-overlay');
+        if (overlay) overlay.classList.remove('show');
     });
     await sleep(300);
 

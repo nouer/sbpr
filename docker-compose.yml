@@ -3,6 +3,11 @@ services:
     # テスト/E2E 用: ホストへポート公開しない（ポート競合を根絶する）
     build: .
     image: "${COMPOSE_PROJECT_NAME:-sbpr}_app_image"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     networks:
       sbpr_net:
         ipv4_address: "${SBPR_APP_IP:-172.31.0.10}"
@@ -39,6 +44,41 @@ services:
       - ./docs:/app/docs
     depends_on:
       - sbpr-app
+
+  sbpr-playwright:
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
+    environment:
+      - E2E_APP_IP=${SBPR_APP_IP:-172.31.0.10}
+    networks:
+      - sbpr_net
+    volumes:
+      - ./local_app:/app/local_app
+      - ./tools:/app/tools
+      - ./tests:/app/tests
+    depends_on:
+      sbpr-app:
+        condition: service_healthy
+    command: npx playwright test
+
+  sbpr-screenshots:
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
+    environment:
+      - E2E_APP_IP=${SBPR_APP_IP:-172.31.0.10}
+    networks:
+      - sbpr_net
+    volumes:
+      - ./local_app:/app/local_app
+      - ./tools:/app/tools
+      - ./tests:/app/tests
+      - ./docs:/app/docs
+    depends_on:
+      sbpr-app:
+        condition: service_healthy
+    command: node tools/take_screenshots.js
 
 networks:
   sbpr_net:
