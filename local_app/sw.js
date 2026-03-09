@@ -3,7 +3,7 @@
  * アセットキャッシュによる完全オフライン対応
  */
 
-const CACHE_NAME = 'sbpr-v1.0.0-1773016677';
+const CACHE_NAME = 'sbpr-v1.0.0-1773018830';
 
 const PRECACHE_ASSETS = [
     '/',
@@ -49,6 +49,10 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
     if (url.pathname.startsWith('/openai/') || url.pathname.startsWith('/api/openai')) {
+        return;
+    }
+
+    if (url.pathname === '/notify.html') {
         return;
     }
 

@@ -55,4 +55,28 @@
 - **手を抜かない**：根本原因を見つける。一時的な修正は避ける。シニアエンジニアの水準を保つ。
 - **影響を最小化する**：変更は必要な箇所のみにとどめる。バグを新たに引き込まない。
 
+---
 
+## プロジェクト構造
+
+sbpr/
+├── local_app/           # フロントエンド（HTML/CSS/JS）
+│   ├── index.html       # メインHTML
+│   ├── script.js        # メインロジック
+│   ├── style.css        # スタイル
+│   ├── bp.calc.js       # 血圧計算（純粋関数）
+│   ├── bp.calc.test.js  # ユニットテスト
+│   ├── e2e.test.js      # E2Eテスト（Puppeteer）
+│   ├── sw.js            # Service Worker
+│   ├── version.js       # ビルド時生成
+│   ├── manifest.json    # PWA マニフェスト
+│   ├── api/openai.js    # OpenAI APIクライアント
+│   └── icons/           # PWAアイコン
+├── api/                 # Vercel Serverless Functions
+├── scripts/             # ビルドスクリプト
+├── docs/                # ドキュメント
+├── nginx/               # Nginx設定
+├── Dockerfile           # 本番用（nginx:alpine）
+├── Dockerfile.test      # テスト用（node + puppeteer）
+├── docker-compose.yml   # Docker Compose
+└── vercel.json          # Vercelデプロイ設定

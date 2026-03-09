@@ -168,8 +168,9 @@ describe('E2E Test: sbpr App', () => {
 
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         const recordText = await page.$eval('#recent-records', el => el.textContent || '');
@@ -188,8 +189,9 @@ describe('E2E Test: sbpr App', () => {
         });
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         const deleteBtn = await page.$('.record-actions .delete-btn');
@@ -216,8 +218,9 @@ describe('E2E Test: sbpr App', () => {
         });
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         await page.click('[data-tab="chart"]');
@@ -330,8 +333,9 @@ describe('E2E Test: sbpr App', () => {
 
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         const recordText = await page.$eval('#recent-records', el => el.textContent || '');
@@ -443,8 +447,9 @@ describe('E2E Test: sbpr App', () => {
         await new Promise(r => setTimeout(r, 800));
 
         const hasSuccess = await page.evaluate(() => {
-            const msg = document.getElementById('no-medication-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         });
         expect(hasSuccess).toBe(true);
 
@@ -494,8 +499,9 @@ describe('E2E Test: sbpr App', () => {
         }, importJson);
 
         await page.waitForFunction(() => {
-            const msg = document.getElementById('settings-message');
-            return msg && msg.textContent.includes('インポートしました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('インポートしました');
         }, { timeout: 10000 });
 
         const restored = await page.evaluate(() => {
@@ -624,8 +630,9 @@ describe('E2E Test: sbpr App', () => {
 
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         const formValues = await page.evaluate(() => {
@@ -669,8 +676,9 @@ describe('E2E Test: sbpr App', () => {
         });
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
@@ -708,8 +716,9 @@ describe('E2E Test: sbpr App', () => {
         });
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         const timeDiff = await page.evaluate(() => {
@@ -1046,8 +1055,9 @@ describe('E2E Test: sbpr App', () => {
         });
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         await page.click('[data-tab="chart"]');
@@ -1121,8 +1131,9 @@ describe('E2E Test: sbpr App', () => {
         });
         await page.click('#save-btn');
         await page.waitForFunction(() => {
-            const msg = document.getElementById('record-message');
-            return msg && msg.textContent.includes('保存しました');
+            const t = document.getElementById('toast');
+            const txt = document.getElementById('toast-text');
+            return t && t.style.display !== 'none' && txt && txt.textContent.includes('保存しました');
         }, { timeout: 10000 });
 
         await page.click('[data-tab="chart"]');
@@ -1217,6 +1228,50 @@ describe('E2E Test: sbpr App', () => {
         await page.evaluate(() => {
             localStorage.removeItem('sbpr_openai_api_key');
         });
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-036: お知らせ設定チェックボックスの表示・トグル確認', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        // 設定タブに切り替え
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        // チェックボックスが存在し、デフォルトでチェックされている
+        const checkbox = await page.$('#setting-notify-enabled');
+        expect(checkbox).not.toBeNull();
+        const isChecked = await page.$eval('#setting-notify-enabled', el => el.checked);
+        expect(isChecked).toBe(true);
+
+        // チェックを外す → localStorageに '0' が保存される
+        await page.click('#setting-notify-enabled');
+        const stored = await page.evaluate(() => localStorage.getItem('sbpr_notification_enabled'));
+        expect(stored).toBe('0');
+
+        // チェックを戻す → localStorageに '1' が保存される
+        await page.click('#setting-notify-enabled');
+        const stored2 = await page.evaluate(() => localStorage.getItem('sbpr_notification_enabled'));
+        expect(stored2).toBe('1');
+
+        expect(pageErrors.length).toBe(0);
+    }, 60000);
+
+    test('E2E-037: 「お知らせを見る」ボタンが設定タブに表示される', async () => {
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 60000 });
+        await waitForAppReady();
+
+        // 設定タブに切り替え
+        await page.click('[data-tab="settings"]');
+        await page.waitForSelector('#tab-settings.active', { timeout: 5000 });
+
+        // 「お知らせを見る」ボタンが存在する
+        const btn = await page.$('#btn-open-notification');
+        expect(btn).not.toBeNull();
+        const text = await page.$eval('#btn-open-notification', el => el.textContent);
+        expect(text).toContain('お知らせを見る');
 
         expect(pageErrors.length).toBe(0);
     }, 60000);

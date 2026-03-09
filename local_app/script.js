@@ -144,6 +144,8 @@ const LS_KEY_NIGHT_START = 'sbpr_night_start_hour';
 const LS_KEY_LAST_EXPORT_AT = 'sbpr_last_export_at';
 const LS_KEY_EXPORT_REMINDER_DAYS = 'sbpr_export_reminder_days';
 const LS_KEY_EXPORT_REMINDER_ENABLED = 'sbpr_export_reminder_enabled';
+const LS_KEY_NOTIFY_ENABLED = 'sbpr_notification_enabled';
+const LS_KEY_NOTIFY_HASH = 'sbpr_notification_hash';
 
 function getDayStartHour() {
     const v = parseInt(localStorage.getItem(LS_KEY_DAY_START), 10);
@@ -304,6 +306,7 @@ function levelText(value) {
  */
 async function initApp() {
     initVersionInfo();
+    initToast();
     initScrollToTop();
     initUpdateBanner();
     initExportReminder();
@@ -319,6 +322,7 @@ async function initApp() {
     initEditDialog();
     initProfile();
     initAISettings();
+    initNotification();
     await initAIDiagnosis();
     updateAITabVisibility();
     setDefaultDateTime();
@@ -333,6 +337,7 @@ async function initApp() {
     await registerServiceWorker();
     await updateAppBadge();
     checkExportReminder();
+    checkNotification();
     document.body.dataset.appReady = 'true';
 }
 
@@ -488,22 +493,30 @@ function initSelectOnFocus() {
     }
 }
 
-/**
- * メッセージ表示
- * @param {string} elementId
- * @param {string} text
- * @param {string} type - 'success' | 'error' | 'info'
- * @param {number} [durationMs] - 表示時間（ミリ秒）。未指定時は success なら 5000、それ以外 3000
- */
-function showMessage(elementId, text, type, durationMs) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    el.textContent = text;
-    el.className = `message show ${type}`;
-    const duration = durationMs != null ? durationMs : (type === 'success' ? 5000 : 3000);
-    setTimeout(() => {
-        el.classList.remove('show');
-    }, duration);
+let _toastTimer = null;
+let _pendingNotificationHash = null;
+
+async function hashString(str) {
+    const data = new TextEncoder().encode(str);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function showToast(text, type) {
+    const el = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = text;
+    el.className = `toast ${type}`;
+    el.style.display = 'block';
+    clearTimeout(_toastTimer);
+    if (type !== 'error' && type !== 'info') {
+        _toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+}
+
+function initToast() {
+    document.getElementById('toast-close').addEventListener('click', () => {
+        document.getElementById('toast').style.display = 'none';
+    });
 }
 
 /**
@@ -527,7 +540,7 @@ async function saveRecord() {
     });
 
     if (!validation.valid) {
-        showMessage('record-message', validation.errors[0], 'error');
+        showToast(validation.errors[0], 'error');
         return;
     }
 
@@ -553,7 +566,7 @@ async function saveRecord() {
 
     try {
         await addRecord(record);
-        showMessage('record-message', '記録を保存しました', 'success');
+        showToast('記録を保存しました', 'success');
 
         setDefaultDateTime();
         await refreshAll();
@@ -566,7 +579,7 @@ async function saveRecord() {
             saveBtn.disabled = false;
         }, 1500);
     } catch (error) {
-        showMessage('record-message', '保存に失敗しました: ' + error.message, 'error');
+        showToast('保存に失敗しました: ' + error.message, 'error');
         saveBtn.textContent = originalLabel;
         saveBtn.disabled = false;
     }
@@ -583,7 +596,7 @@ async function saveNoMedicationRecord() {
 
     const validation = validateNoMedicationDate(dateStr);
     if (!validation.valid) {
-        showMessage('no-medication-message', validation.errors[0], 'error');
+        showToast(validation.errors[0], 'error');
         return;
     }
 
@@ -599,7 +612,7 @@ async function saveNoMedicationRecord() {
         return rDate === dateOnly;
     });
     if (existingSameDay) {
-        showMessage('no-medication-message', 'この日付は既に服薬なしで記録済みです', 'error');
+        showToast('この日付は既に服薬なしで記録済みです', 'error');
         return;
     }
 
@@ -626,7 +639,7 @@ async function saveNoMedicationRecord() {
 
     try {
         await addRecord(record);
-        showMessage('no-medication-message', '服薬なしの記録を保存しました', 'success');
+        showToast('服薬なしの記録を保存しました', 'success');
         if (dateInput) dateInput.value = '';
         if (memoInput) memoInput.value = '';
         await refreshAll();
@@ -640,7 +653,7 @@ async function saveNoMedicationRecord() {
             noMedBtn.disabled = false;
         }, 1500);
     } catch (error) {
-        showMessage('no-medication-message', '保存に失敗しました: ' + error.message, 'error');
+        showToast('保存に失敗しました: ' + error.message, 'error');
         noMedBtn.textContent = noMedOriginalLabel;
         noMedBtn.disabled = false;
     }
@@ -814,7 +827,7 @@ async function saveEditRecord() {
             await refreshHistory();
             await refreshChart();
         } catch (error) {
-            alert('更新に失敗しました: ' + error.message);
+            showToast('更新に失敗しました: ' + error.message, 'error');
         }
         return;
     }
@@ -834,7 +847,7 @@ async function saveEditRecord() {
     });
 
     if (!validation.valid) {
-        alert(validation.errors[0]);
+        showToast(validation.errors[0], 'error');
         return;
     }
 
@@ -857,7 +870,7 @@ async function saveEditRecord() {
         await refreshAll();
         await refreshHistory();
     } catch (error) {
-        alert('更新に失敗しました: ' + error.message);
+        showToast('更新に失敗しました: ' + error.message, 'error');
     }
 }
 
@@ -914,12 +927,12 @@ function initChartSettings() {
         const dayVal = parseInt(dayInput.value, 10);
         const nightVal = parseInt(nightInput.value, 10);
         if (isNaN(dayVal) || dayVal < 0 || dayVal > 23 || isNaN(nightVal) || nightVal < 0 || nightVal > 23) {
-            showMessage('chart-settings-message', '0〜23の整数を入力してください', 'error');
+            showToast('0〜23の整数を入力してください', 'error');
             return;
         }
         localStorage.setItem(LS_KEY_DAY_START, dayVal);
         localStorage.setItem(LS_KEY_NIGHT_START, nightVal);
-        showMessage('chart-settings-message', '設定を保存しました', 'success');
+        showToast('設定を保存しました', 'success');
         if (currentChartMode === 'daynight') {
             refreshChart();
         }
@@ -1560,9 +1573,9 @@ async function exportData() {
         URL.revokeObjectURL(url);
 
         saveLastExportAt();
-        showMessage('settings-message', `${records.length}件のデータをエクスポートしました`, 'success');
+        showToast(`${records.length}件のデータをエクスポートしました`, 'success');
     } catch (error) {
-        showMessage('settings-message', 'エクスポートに失敗しました: ' + error.message, 'error');
+        showToast('エクスポートに失敗しました: ' + error.message, 'error');
     }
 }
 
@@ -1669,10 +1682,10 @@ async function importData(event) {
         if (data.aiMemo != null) parts.push('AI備考を復元しました');
         if (data.aiModel != null) parts.push('AIモデル設定を復元しました');
         if (data.chartSettings) parts.push('グラフ設定を復元しました');
-        showMessage('settings-message', parts.join('。'), 'success');
+        showToast(parts.join('。'), 'success');
         await refreshAll();
     } catch (error) {
-        showMessage('settings-message', 'インポートに失敗しました: ' + error.message, 'error');
+        showToast('インポートに失敗しました: ' + error.message, 'error');
     }
 
     event.target.value = '';
@@ -1687,7 +1700,7 @@ function confirmDeleteAll() {
     document.getElementById('confirm-ok').onclick = async () => {
         await deleteAllRecords();
         closeConfirmDialog();
-        showMessage('settings-message', '全データを削除しました', 'success');
+        showToast('全データを削除しました', 'success');
         await refreshAll();
         await refreshHistory();
         await updateAppBadge();
@@ -1754,7 +1767,7 @@ function initProfile() {
         localStorage.setItem(LS_KEY_BIRTHDAY, birthdayInput.value);
         localStorage.setItem(LS_KEY_GENDER, genderInput.value);
         localStorage.setItem(LS_KEY_HEIGHT, heightInput.value);
-        showMessage('profile-message', 'プロフィールを保存しました', 'success');
+        showToast('プロフィールを保存しました', 'success');
     });
 }
 
@@ -1808,18 +1821,18 @@ function initAISettings() {
     document.getElementById('save-api-key-btn').addEventListener('click', () => {
         const key = apiKeyInput.value.trim();
         if (!key) {
-            showMessage('ai-settings-message', 'APIキーを入力してください', 'error');
+            showToast('APIキーを入力してください', 'error');
             return;
         }
         localStorage.setItem(LS_KEY_API_KEY, key);
-        showMessage('ai-settings-message', 'APIキーを保存しました', 'success');
+        showToast('APIキーを保存しました', 'success');
         updateAITabVisibility();
     });
 
     document.getElementById('clear-api-key-btn').addEventListener('click', () => {
         localStorage.removeItem(LS_KEY_API_KEY);
         apiKeyInput.value = '';
-        showMessage('ai-settings-message', 'APIキーを削除しました', 'success');
+        showToast('APIキーを削除しました', 'success');
         updateAITabVisibility();
     });
 
@@ -1830,7 +1843,7 @@ function initAISettings() {
     document.getElementById('save-ai-memo-btn').addEventListener('click', () => {
         const memo = aiMemoInput.value.trim();
         localStorage.setItem(LS_KEY_AI_MEMO, memo);
-        showMessage('ai-settings-message', '備考を保存しました', 'success');
+        showToast('備考を保存しました', 'success');
     });
 
     const aiModelSelect = document.getElementById('ai-model-select');
@@ -1852,6 +1865,71 @@ function initAISettings() {
             updateModelInfo();
         });
     }
+}
+
+// ===== お知らせ機能 =====
+
+const NOTIFY_URL = '/notify.html';
+
+async function checkNotification() {
+    try {
+        const enabled = localStorage.getItem(LS_KEY_NOTIFY_ENABLED);
+        if (enabled === '0') return;
+
+        const res = await fetch(NOTIFY_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+
+        const html = await res.text();
+        const newHash = await hashString(html);
+        const savedHash = localStorage.getItem(LS_KEY_NOTIFY_HASH);
+
+        if (newHash !== savedHash) {
+            _pendingNotificationHash = newHash;
+            showNotificationToast('開発元からのお知らせがあります。タップして確認');
+        }
+    } catch (e) {
+        // オフライン or ネットワークエラー時はスキップ
+    }
+}
+
+function showNotificationToast(text) {
+    const el = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = text;
+    el.className = 'toast info clickable';
+    el.style.display = 'block';
+    clearTimeout(_toastTimer);
+
+    function onToastClick(e) {
+        if (e.target.id === 'toast-close') return;
+        el.removeEventListener('click', onToastClick);
+        el.style.display = 'none';
+        openNotificationPage();
+    }
+    el.addEventListener('click', onToastClick);
+}
+
+function openNotificationPage() {
+    window.open(NOTIFY_URL, '_blank');
+    if (_pendingNotificationHash) {
+        try {
+            localStorage.setItem(LS_KEY_NOTIFY_HASH, _pendingNotificationHash);
+        } catch (e) {}
+        _pendingNotificationHash = null;
+    }
+}
+
+function initNotification() {
+    const enabledCheckbox = document.getElementById('setting-notify-enabled');
+    const saved = localStorage.getItem(LS_KEY_NOTIFY_ENABLED);
+    enabledCheckbox.checked = saved !== '0';
+
+    enabledCheckbox.addEventListener('change', (e) => {
+        try {
+            localStorage.setItem(LS_KEY_NOTIFY_ENABLED, e.target.checked ? '1' : '0');
+        } catch (err) {}
+    });
+
+    document.getElementById('btn-open-notification').addEventListener('click', openNotificationPage);
 }
 
 function getApiKey() {
@@ -2620,7 +2698,7 @@ function initExportReminder() {
                 setExportReminderDays(days);
             }
             setExportReminderEnabled(enabled);
-            showMessage('settings-message', 'エクスポート通知の設定を保存しました', 'success');
+            showToast('エクスポート通知の設定を保存しました', 'success');
         });
     }
 }
