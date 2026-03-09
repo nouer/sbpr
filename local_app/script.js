@@ -323,8 +323,13 @@ async function initApp() {
     initProfile();
     initAISettings();
     initNotification();
-    await initAIDiagnosis();
+    // Phase 1: DB読み込みとAI初期化を並列実行
+    const [allRecords] = await Promise.all([
+        getAllRecords(),
+        initAIDiagnosis()
+    ]);
     updateAITabVisibility();
+
     setDefaultDateTime();
     initLevelSelector('input-mood');
     initLevelSelector('input-condition');
@@ -332,12 +337,19 @@ async function initApp() {
     initLevelSelector('edit-condition');
     initSelectOnFocus();
     handleTabFromUrl();
-    await refreshAll();
-    await prefillFormWithLastRecord();
-    await registerServiceWorker();
-    await updateAppBadge();
+
+    // Phase 2: レコード消費者を並列実行
+    await Promise.all([
+        refreshAll(allRecords),
+        prefillFormWithLastRecord(allRecords),
+        updateAppBadge(allRecords)
+    ]);
+
+    // Phase 3: 非クリティカル（fire-and-forget）
+    registerServiceWorker();
     checkExportReminder();
     checkNotification();
+
     document.body.dataset.appReady = 'true';
 }
 
@@ -449,9 +461,9 @@ function setDefaultDateTime() {
  * 直近の記録がある場合、その値をフォームにセットする。
  * 日時は常に現在時刻を設定する。
  */
-async function prefillFormWithLastRecord() {
+async function prefillFormWithLastRecord(records) {
     try {
-        const records = await getAllRecords();
+        if (!records) records = await getAllRecords();
         if (records.length === 0) return;
 
         const last = records[0];
@@ -569,9 +581,10 @@ async function saveRecord() {
         showToast('記録を保存しました', 'success');
 
         setDefaultDateTime();
-        await refreshAll();
-        await prefillFormWithLastRecord();
-        await updateAppBadge();
+        const updatedRecords = await getAllRecords();
+        await refreshAll(updatedRecords);
+        await prefillFormWithLastRecord(updatedRecords);
+        await updateAppBadge(updatedRecords);
 
         saveBtn.textContent = '保存しました';
         setTimeout(() => {
@@ -642,10 +655,11 @@ async function saveNoMedicationRecord() {
         showToast('服薬なしの記録を保存しました', 'success');
         if (dateInput) dateInput.value = '';
         if (memoInput) memoInput.value = '';
-        await refreshAll();
+        const updatedRecords = await getAllRecords();
+        await refreshAll(updatedRecords);
         await refreshHistory();
         await refreshChart();
-        await updateAppBadge();
+        await updateAppBadge(updatedRecords);
 
         noMedBtn.textContent = '保存しました';
         setTimeout(() => {
@@ -662,15 +676,15 @@ async function saveNoMedicationRecord() {
 /**
  * 全画面リフレッシュ
  */
-async function refreshAll() {
-    await refreshRecentRecords();
+async function refreshAll(records) {
+    await refreshRecentRecords(records);
 }
 
 /**
  * 直近の記録を表示（記録タブ）
  */
-async function refreshRecentRecords() {
-    const records = await getAllRecords();
+async function refreshRecentRecords(records) {
+    if (!records) records = await getAllRecords();
     const container = document.getElementById('recent-records');
     const recent = records.slice(0, 10);
 
@@ -951,7 +965,32 @@ function initChartControls() {
     });
 }
 
+// ===== Chart.js 遅延読み込み =====
+
+let _chartLibLoaded = false;
+let _chartLibLoading = null;
+
+async function ensureChartLibLoaded() {
+    if (_chartLibLoaded) return;
+    if (_chartLibLoading) return _chartLibLoading;
+    _chartLibLoading = new Promise((resolve, reject) => {
+        const s1 = document.createElement('script');
+        s1.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+        s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js';
+            s2.onload = () => { _chartLibLoaded = true; resolve(); };
+            s2.onerror = reject;
+            document.head.appendChild(s2);
+        };
+        s1.onerror = reject;
+        document.head.appendChild(s1);
+    });
+    return _chartLibLoading;
+}
+
 async function refreshChart() {
+    await ensureChartLibLoaded();
     const allRecords = await getAllRecords();
     let records = [...allRecords].reverse();
 
@@ -2753,10 +2792,10 @@ function initExportReminder() {
  * アプリアイコンのバッジを更新
  * 当日の記録がなければバッジ「1」を表示、あればクリア
  */
-async function updateAppBadge() {
+async function updateAppBadge(records) {
     if (!('setAppBadge' in navigator)) return;
     try {
-        const records = await getAllRecords();
+        if (!records) records = await getAllRecords();
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         const hasTodayRecord = records.some(r => {
