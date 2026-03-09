@@ -402,6 +402,38 @@ def _extract_description(md_text: str) -> str:
 # Image path rewriting
 # ---------------------------------------------------------------------------
 
+def _slugify(text: str) -> str:
+    """Generate a URL-friendly slug from heading text (GitHub-compatible anchors)."""
+    import unicodedata
+    # Strip HTML tags
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.strip().lower()
+    # Keep only letters (incl. CJK), digits, spaces, and hyphens
+    result = []
+    for ch in text:
+        cat = unicodedata.category(ch)
+        if cat.startswith('L') or cat.startswith('N') or ch in (' ', '-'):
+            result.append(ch)
+    text = ''.join(result)
+    # Replace spaces with hyphens (preserving existing hyphens → e.g. " - " → "---")
+    text = re.sub(r' +', '-', text)
+    text = text.strip('-')
+    return text
+
+
+def _add_heading_ids(html: str) -> str:
+    """Add id attributes to heading tags for anchor links."""
+    def _replace_heading(m):
+        tag = m.group(1)
+        attrs = m.group(2) or ""
+        content = m.group(3)
+        if "id=" in attrs:
+            return m.group(0)
+        slug = _slugify(content)
+        return f"<{tag}{attrs} id=\"{slug}\">{content}</{tag}>"
+    return re.sub(r"<(h[1-6])(\s[^>]*)?>(.+?)</\1>", _replace_heading, html)
+
+
 def _rewrite_image_paths(html: str, images_dir: str) -> str:
     """Rewrite images/XX.png paths to /<images_dir>/XX.png."""
     html = re.sub(
@@ -466,6 +498,7 @@ def main() -> None:
     description = _extract_description(md_text)
 
     body_html = convert_markdown(md_text)
+    body_html = _add_heading_ids(body_html)
     body_html = _rewrite_image_paths(body_html, args.images_dir)
 
     # Indent body for clean HTML output
