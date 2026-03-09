@@ -1052,6 +1052,11 @@ body {
         padding: 5px 2px;
     }
 
+    .no-medication-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .record-item {
         flex-wrap: wrap;
     }
