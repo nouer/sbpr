@@ -1,9 +1,19 @@
 const { chromium } = require('playwright');
 const path = require('path');
 
+const fs = require('fs');
+
 const APP_URL = `http://${process.env.E2E_APP_IP || '172.31.0.10'}`;
-const OUTPUT_DIR = '/app/docs/images';
+const OUTPUT_DIRS = ['/app/docs/images', '/app/local_app/docs-images'];
 const VIEWPORT = { width: 390, height: 844 };
+
+async function takeScreenshot(page, filename) {
+    for (const dir of OUTPUT_DIRS) {
+        if (fs.existsSync(dir)) {
+            await page.screenshot({ path: path.join(dir, filename) });
+        }
+    }
+}
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -88,7 +98,8 @@ async function main() {
     await sleep(500);
     await page.evaluate(() => window.scrollTo(0, 0));
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '01_record_form.png') });
+    await takeScreenshot(page, '01_record_form.png');
+
 
     // 02: Recent records
     console.log('Taking 02_record_recent.png...');
@@ -99,7 +110,8 @@ async function main() {
         await page.evaluate(() => window.scrollTo(0, 800));
     }
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '02_record_recent.png') });
+    await takeScreenshot(page, '02_record_recent.png');
+
 
     // 03: Chart continuous
     console.log('Taking 03_chart_continuous.png...');
@@ -117,7 +129,8 @@ async function main() {
     await sleep(1500);
     await page.evaluate(() => window.scrollTo(0, 0));
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '03_chart_continuous.png') });
+    await takeScreenshot(page, '03_chart_continuous.png');
+
 
     // 04: Chart day/night
     console.log('Taking 04_chart_daynight.png...');
@@ -132,7 +145,8 @@ async function main() {
     await sleep(1500);
     await page.evaluate(() => window.scrollTo(0, 0));
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '04_chart_daynight.png') });
+    await takeScreenshot(page, '04_chart_daynight.png');
+
 
     // 05: Chart stats
     console.log('Taking 05_chart_stats.png...');
@@ -143,7 +157,8 @@ async function main() {
         await page.evaluate(() => window.scrollTo(0, 600));
     }
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '05_chart_stats.png') });
+    await takeScreenshot(page, '05_chart_stats.png');
+
 
     // 06: History tab
     console.log('Taking 06_history_tab.png...');
@@ -151,7 +166,8 @@ async function main() {
     await sleep(1000);
     await page.evaluate(() => window.scrollTo(0, 0));
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '06_history_tab.png') });
+    await takeScreenshot(page, '06_history_tab.png');
+
 
     // 07: Settings data
     console.log('Taking 07_settings_data.png...');
@@ -159,7 +175,8 @@ async function main() {
     await sleep(500);
     await page.evaluate(() => window.scrollTo(0, 0));
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '07_settings_data.png') });
+    await takeScreenshot(page, '07_settings_data.png');
+
 
     // 08: Settings profile
     console.log('Taking 08_settings_profile.png...');
@@ -174,7 +191,8 @@ async function main() {
         await page.evaluate(el => el && el.scrollIntoView({ block: 'start' }), profileSection);
     }
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '08_settings_profile.png') });
+    await takeScreenshot(page, '08_settings_profile.png');
+
 
     // 09: Settings chart
     console.log('Taking 09_settings_chart.png...');
@@ -189,7 +207,8 @@ async function main() {
         await page.evaluate(el => el && el.scrollIntoView({ block: 'start' }), chartSettings);
     }
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '09_settings_chart.png') });
+    await takeScreenshot(page, '09_settings_chart.png');
+
 
     // 10: Settings AI
     console.log('Taking 10_settings_ai.png...');
@@ -204,7 +223,8 @@ async function main() {
         await page.evaluate(el => el && el.scrollIntoView({ block: 'start' }), aiSection);
     }
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '10_settings_ai.png') });
+    await takeScreenshot(page, '10_settings_ai.png');
+
 
     // 11: Edit dialog
     console.log('Taking 11_edit_dialog.png...');
@@ -231,7 +251,8 @@ async function main() {
         }
     });
     await sleep(1000);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '11_edit_dialog.png') });
+    await takeScreenshot(page, '11_edit_dialog.png');
+
     // Close dialog via JS
     await page.evaluate(() => {
         // Try clicking cancel button
@@ -265,7 +286,8 @@ async function main() {
         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     }
     await sleep(300);
-    await page.screenshot({ path: path.join(OUTPUT_DIR, '12_settings_appinfo.png') });
+    await takeScreenshot(page, '12_settings_appinfo.png');
+
 
     console.log('All screenshots taken successfully!');
     await browser.close();
