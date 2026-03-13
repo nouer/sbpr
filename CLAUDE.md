@@ -1,82 +1,72 @@
-# ワークフロー設計
+# SBPR - 血圧管理PWA
 
-### 1. Planモードを基本とする
-- 3ステップ以上 or アーキテクチャに関わるタスクは必ずPlanモードで開始する
-- 途中でうまくいかなくなったら、無理に進めずすぐに立ち止まって再計画する
-- 構築だけでなく、検証ステップにもPlanモードを使う
-- 曖昧さを減らすため、実装前に詳細な仕様を書く
+## コマンド
 
-### 2. サブエージェント戦略
-- メインのコンテキストウィンドウをクリーンに保つためにサブエージェントを積極的に活用する
-- リサーチ・調査・並列分析はサブエージェントに任せる
-- 複雑な問題には、サブエージェントを使ってより多くの計算リソースを投入する
-- 集中して実行するために、サブエージェント1つにつき1タスクを割り当てる
+```bash
+# テスト
+npm test                          # Jest ユニットテスト + Puppeteer E2E（カバレッジ付き）
+npm run test:pw                   # Playwright E2Eテスト
+npm run screenshots               # スクリーンショット撮影
 
-### 3. 自己改善ループ
-- ユーザーから修正を受けたら必ず `tasks/lessons.md` にそのパターンを記録する
-- 同じミスを繰り返さないように、自分へのルールを書く
-- ミス率が下がるまで、ルールを徹底的に改善し続ける
-- セッション開始時に、そのプロジェクトに関連するlessonsをレビューする
+# ビルド・デプロイ
+scripts/build.sh                  # Docker イメージビルド
+scripts/rebuild.sh                # フルリビルド（ポート自動選択）
+scripts/generate_version.sh       # version.js 生成 + sw.js CACHE_NAME 更新
+scripts/build-docs.sh             # Markdown → HTML ドキュメント変換
 
-### 4. 完了前に必ず検証する
-- 動作を証明できるまで、タスクを完了とマークしない
-- 必要に応じてmainブランチと自分の変更の差分を確認する
-- 「スタッフエンジニアはこれを承認するか？」と自問する
-- テストを実行し、ログを確認し、正しく動作することを示す
-
-### 5. エレガントさを追求する（バランスよく）
-- 重要な変更をする前に「もっとエレガントな方法はないか？」と一度立ち止まる
-- ハック的な修正に感じたら「今知っていることをすべて踏まえて、エレガントな解決策を実装する」
-- シンプルで明白な修正にはこのプロセスをスキップする（過剰設計しない）
-- 提示する前に自分の作業に自問自答する
-
-### 6. 自律的なバグ修正
-- バグレポートを受けたら、手取り足取り教えてもらわずにそのまま修正する
-- ログ・エラー・失敗しているテストを見て、自分で解決する
-- ユーザーのコンテキスト切り替えをゼロにする
-- 言われなくても、失敗しているCIテストを修正しに行く
-
----
-
-## タスク管理
-
-1. **まず計画を立てる**：チェック可能な項目として `tasks/todo.md` に計画を書く
-2. **計画を確認する**：実装を開始する前に確認する
-3. **進捗を記録する**：完了した項目を随時マークしていく
-4. **変更を説明する**：各ステップで高レベルのサマリーを提供する
-5. **結果をドキュメント化する**：`tasks/todo.md` にレビューセクションを追加する
-6. **学びを記録する**：修正を受けた後に `tasks/lessons.md` を更新する
-
----
-
-## コア原則
-
-- **シンプル第一**：すべての変更をできる限りシンプルにする。影響するコードを最小限にする。
-- **手を抜かない**：根本原因を見つける。一時的な修正は避ける。シニアエンジニアの水準を保つ。
-- **影響を最小化する**：変更は必要な箇所のみにとどめる。バグを新たに引き込まない。
+# Docker Compose
+docker compose up sbpr-app        # アプリ起動（内部のみ）
+docker compose up sbpr-app-public # ブラウザアクセス用（ポート 8082）
+docker compose run sbpr-test      # Jest + Puppeteer テスト実行
+docker compose run sbpr-playwright # Playwright テスト実行
+```
 
 ---
 
 ## プロジェクト構造
 
+デプロイ先: Docker（nginx:alpine セルフホスト）/ Vercel（サーバーレス）の二系統。
+
 sbpr/
-├── local_app/           # フロントエンド（HTML/CSS/JS）
-│   ├── index.html       # メインHTML
-│   ├── script.js        # メインロジック
-│   ├── style.css        # スタイル
-│   ├── bp.calc.js       # 血圧計算（純粋関数）
-│   ├── bp.calc.test.js  # ユニットテスト
-│   ├── e2e.test.js      # E2Eテスト（Puppeteer）
-│   ├── sw.js            # Service Worker
-│   ├── version.js       # ビルド時生成
-│   ├── manifest.json    # PWA マニフェスト
-│   ├── api/openai.js    # OpenAI APIクライアント
-│   └── icons/           # PWAアイコン
-├── api/                 # Vercel Serverless Functions
-├── scripts/             # ビルドスクリプト
-├── docs/                # ドキュメント
-├── nginx/               # Nginx設定
-├── Dockerfile           # 本番用（nginx:alpine）
-├── Dockerfile.test      # テスト用（node + puppeteer）
-├── docker-compose.yml   # Docker Compose
-└── vercel.json          # Vercelデプロイ設定
+├── local_app/              # フロントエンド（HTML/CSS/JS）
+│   ├── index.html          # メインHTML
+│   ├── script.js           # メインロジック（104KB）
+│   ├── style.css           # スタイル
+│   ├── bp.calc.js          # 血圧計算（純粋関数）
+│   ├── bp.calc.test.js     # Jest ユニットテスト
+│   ├── e2e.test.js         # E2Eテスト（Jest + Puppeteer、レガシー）
+│   ├── sw.js               # Service Worker
+│   ├── version.js          # ビルド時自動生成（手動編集不可）
+│   ├── manifest.json       # PWA マニフェスト
+│   ├── manual.html         # マニュアルページ
+│   ├── notify.html         # 通知ページ
+│   ├── promotion.html      # プロモーションページ
+│   ├── api/openai.js       # OpenAI APIクライアント
+│   └── icons/              # PWAアイコン・スプラッシュ画像
+├── tests/e2e/              # Playwright E2Eテスト（8 spec files）
+├── tools/                  # ユーティリティ（スクリーンショット撮影等）
+├── api/                    # Vercel Serverless Functions
+├── scripts/                # ビルド・生成スクリプト
+│   ├── build.sh            # Docker ビルド
+│   ├── rebuild.sh          # フルリビルド
+│   ├── generate_version.sh # version.js + sw.js CACHE_NAME 生成
+│   ├── build-docs.sh       # ドキュメントビルド
+│   ├── md-to-html.py       # Markdown → HTML 変換
+│   └── generate_splash.py  # iOS PWA スプラッシュ画像生成
+├── docs/                   # ドキュメント（設計書・マニュアル等）
+├── nginx/                  # Nginx設定
+├── Dockerfile              # 本番用（nginx:alpine）
+├── Dockerfile.test         # テスト用（node + Puppeteer）
+├── Dockerfile.playwright   # Playwright テスト用（node:18-bookworm）
+├── docker-compose.yml      # Docker Compose（5サービス）
+├── playwright.config.js    # Playwright設定（モバイルビューポート 390×844）
+└── vercel.json             # Vercelデプロイ設定
+
+---
+
+## 注意点・非自明なパターン
+
+- **version.js / sw.js CACHE_NAME は自動生成** — `scripts/generate_version.sh` が `package.json` のバージョンとビルドハッシュから生成する。手動編集不可。
+- **Docker Compose はワークツリー対応** — 環境変数（`COMPOSE_PROJECT_NAME`, `SBPR_SUBNET`, `SBPR_PORT`）でプロジェクト名・サブネットを分離。ワークツリー間の衝突を回避。
+- **テストフレームワークが2系統** — `local_app/e2e.test.js`（Jest + Puppeteer、レガシー）と `tests/e2e/`（Playwright、現行）が共存。新規テストは Playwright で書く。
+- **nginx が `/openai/` をプロキシ** — CORS 回避のため、同一オリジンの `/openai/*` を `api.openai.com` に転送。SSE ストリーミング対応（300秒タイムアウト）。
