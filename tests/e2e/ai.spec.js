@@ -214,3 +214,50 @@ test('E2E-044: AI診断タブのカスタム期間入力で期間が設定され
         localStorage.removeItem('sbpr_openai_api_key');
     });
 });
+
+test('E2E-052: AI会話クリアが動作する', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await page.evaluate(() => {
+        localStorage.setItem('sbpr_openai_api_key', 'sk-test-dummy-key');
+    });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await page.click('[data-tab="ai"]');
+    await page.waitForSelector('#tab-ai.active', { timeout: 5000 });
+
+    // ダミー会話を注入
+    await page.evaluate(() => {
+        aiConversation = [
+            { role: 'user', content: 'テスト質問', displayContent: 'テスト質問' },
+            { role: 'assistant', content: 'テスト回答です。' }
+        ];
+        renderAIChatMessages(false);
+        document.getElementById('ai-followup-row').style.display = '';
+    });
+
+    // 会話が表示されていることを確認
+    const beforeClear = await page.evaluate(() => {
+        return document.querySelectorAll('.ai-msg').length;
+    });
+    expect(beforeClear).toBeGreaterThan(0);
+
+    // クリアボタンをクリック
+    await page.click('#ai-clear-btn');
+    await new Promise(r => setTimeout(r, 500));
+
+    // 会話がクリアされている
+    const afterClear = await page.evaluate(() => ({
+        bubbles: document.querySelectorAll('.ai-msg').length,
+        emptyVisible: document.getElementById('ai-chat-empty') !== null,
+        followupHidden: document.getElementById('ai-followup-row').style.display === 'none'
+    }));
+    expect(afterClear.bubbles).toBe(0);
+    expect(afterClear.followupHidden).toBe(true);
+
+    await page.evaluate(() => {
+        localStorage.removeItem('sbpr_openai_api_key');
+    });
+});

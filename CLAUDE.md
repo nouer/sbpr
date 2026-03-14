@@ -44,7 +44,7 @@ sbpr/
 │   ├── usecases_showcase.html # ユースケースショーケースページ
 │   ├── api/openai.js       # OpenAI APIクライアント
 │   └── icons/              # PWAアイコン・スプラッシュ画像
-├── tests/e2e/              # Playwright E2Eテスト（7 spec files）
+├── tests/e2e/              # Playwright E2Eテスト（8 spec files）
 ├── tools/                  # ユーティリティ（スクリーンショット撮影等）
 ├── api/                    # Vercel Serverless Functions
 ├── scripts/                # ビルド・生成スクリプト

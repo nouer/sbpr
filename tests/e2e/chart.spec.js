@@ -298,3 +298,32 @@ test('E2E-043: カスタム入力の不正値でグラフが壊れない', async
     });
     expect(chartExists).toBe(true);
 });
+
+test('E2E-047: 体重データありで体重グラフが描画される', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    // 体重付きでデータを保存
+    await saveBPRecord(page, { systolic: 120, diastolic: 78, pulse: 68, weight: 65.5 });
+    await new Promise(r => setTimeout(r, 300));
+    await saveBPRecord(page, { systolic: 125, diastolic: 80, pulse: 70, weight: 65.8 });
+
+    await navigateToTab(page, 'chart');
+    await new Promise(r => setTimeout(r, 1000));
+
+    // 体重グラフカードが表示される
+    const weightCardVisible = await page.evaluate(() => {
+        const card = document.getElementById('weight-chart-card');
+        return card && card.style.display !== 'none';
+    });
+    expect(weightCardVisible).toBe(true);
+
+    // Chartインスタンスが存在する
+    const weightChartExists = await page.evaluate(() => {
+        const canvas = document.getElementById('weight-chart');
+        if (!canvas) return false;
+        const chart = Chart.getChart(canvas);
+        return chart !== undefined && chart !== null;
+    });
+    expect(weightChartExists).toBe(true);
+});

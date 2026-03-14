@@ -246,3 +246,145 @@ test('E2E-020: AIモデル情報が正しく表示される', async ({ page }) =
         localStorage.removeItem('sbpr_ai_model');
     });
 });
+
+test('E2E-048: プロフィール保存が動作する', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await navigateToTab(page, 'settings');
+
+    // プロフィール入力
+    await page.fill('#input-birthday', '1990-05-15');
+    await page.selectOption('#input-gender', 'male');
+    await page.fill('#input-height', '170');
+
+    // 保存ボタンクリック
+    await page.click('#save-profile-btn');
+    await waitForToast(page, 'プロフィールを保存しました');
+
+    // localStorageに保存されていることを確認
+    const profile = await page.evaluate(() => ({
+        birthday: localStorage.getItem('sbpr_birthday'),
+        gender: localStorage.getItem('sbpr_gender'),
+        height: localStorage.getItem('sbpr_height')
+    }));
+    expect(profile.birthday).toBe('1990-05-15');
+    expect(profile.gender).toBe('male');
+    expect(profile.height).toBe('170');
+
+    // リロード後も値が復元される
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+    await navigateToTab(page, 'settings');
+
+    const restored = await page.evaluate(() => ({
+        birthday: document.getElementById('input-birthday').value,
+        gender: document.getElementById('input-gender').value,
+        height: document.getElementById('input-height').value
+    }));
+    expect(restored.birthday).toBe('1990-05-15');
+    expect(restored.gender).toBe('male');
+    expect(restored.height).toBe('170');
+
+    // クリーンアップ
+    await page.evaluate(() => {
+        localStorage.removeItem('sbpr_birthday');
+        localStorage.removeItem('sbpr_gender');
+        localStorage.removeItem('sbpr_height');
+    });
+});
+
+test('E2E-049: グラフ設定（時間帯）の保存が動作する', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await navigateToTab(page, 'settings');
+
+    // グラフ設定セクションまでスクロール
+    await page.evaluate(() => {
+        const btn = document.getElementById('save-chart-settings-btn');
+        if (btn) btn.scrollIntoView({ block: 'center' });
+    });
+    await new Promise(r => setTimeout(r, 300));
+
+    // 時間帯を変更
+    await page.fill('#input-day-start', '7');
+    await page.fill('#input-night-start', '20');
+
+    // 保存
+    await page.click('#save-chart-settings-btn');
+    await waitForToast(page, '設定を保存しました');
+
+    // localStorageに保存されていることを確認
+    const settings = await page.evaluate(() => ({
+        dayStart: localStorage.getItem('sbpr_day_start_hour'),
+        nightStart: localStorage.getItem('sbpr_night_start_hour')
+    }));
+    expect(settings.dayStart).toBe('7');
+    expect(settings.nightStart).toBe('20');
+
+    // クリーンアップ
+    await page.evaluate(() => {
+        localStorage.removeItem('sbpr_day_start_hour');
+        localStorage.removeItem('sbpr_night_start_hour');
+    });
+});
+
+test('E2E-051: APIキー表示/非表示切替が動作する', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await navigateToTab(page, 'settings');
+
+    // APIキーセクションまでスクロール
+    await page.evaluate(() => {
+        const btn = document.getElementById('toggle-api-key-btn');
+        if (btn) btn.scrollIntoView({ block: 'center' });
+    });
+    await new Promise(r => setTimeout(r, 300));
+
+    // 初期状態はpassword
+    const initialType = await page.evaluate(() => document.getElementById('input-api-key').type);
+    expect(initialType).toBe('password');
+
+    // トグルクリック → text
+    await page.click('#toggle-api-key-btn');
+    const afterToggle = await page.evaluate(() => document.getElementById('input-api-key').type);
+    expect(afterToggle).toBe('text');
+
+    // 再度クリック → password
+    await page.click('#toggle-api-key-btn');
+    const afterSecondToggle = await page.evaluate(() => document.getElementById('input-api-key').type);
+    expect(afterSecondToggle).toBe('password');
+});
+
+test('E2E-053: エクスポート通知設定の保存が動作する', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await navigateToTab(page, 'settings');
+
+    // エクスポート通知セクションまでスクロール
+    await page.evaluate(() => {
+        const btn = document.getElementById('save-export-reminder-btn');
+        if (btn) btn.scrollIntoView({ block: 'center' });
+    });
+    await new Promise(r => setTimeout(r, 300));
+
+    // 通知間隔を14日に変更
+    await page.selectOption('#export-reminder-days', '14');
+
+    // 保存
+    await page.click('#save-export-reminder-btn');
+    await waitForToast(page, 'エクスポート通知の設定を保存しました');
+
+    // localStorageに保存されている
+    const days = await page.evaluate(() => localStorage.getItem('sbpr_export_reminder_days'));
+    expect(days).toBe('14');
+
+    // クリーンアップ
+    await page.evaluate(() => {
+        localStorage.removeItem('sbpr_export_reminder_days');
+        localStorage.removeItem('sbpr_export_reminder_enabled');
+    });
+});
