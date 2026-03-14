@@ -64,6 +64,12 @@ sbpr/
 
 ---
 
+## ワークフロー
+
+- **[ドキュメント更新](docs/workflow-doc-update.md)** — UI変更時は manual / promotion / usecases_showcase の3ファイル更新 → スクショ再撮影 → HTML再生成
+
+---
+
 ## 注意点・非自明なパターン
 
 - **version.js / sw.js CACHE_NAME は自動生成** — `scripts/generate_version.sh` が `package.json` のバージョンとビルドハッシュから生成する。手動編集不可。
