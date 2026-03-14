@@ -30,7 +30,7 @@ docker compose run sbpr-playwright # Playwright テスト実行
 sbpr/
 ├── local_app/              # フロントエンド（HTML/CSS/JS）
 │   ├── index.html          # メインHTML
-│   ├── script.js           # メインロジック（104KB）
+│   ├── script.js           # メインロジック（106KB）
 │   ├── style.css           # スタイル
 │   ├── bp.calc.js          # 血圧計算（純粋関数）
 │   ├── bp.calc.test.js     # Jest ユニットテスト
@@ -41,9 +41,10 @@ sbpr/
 │   ├── manual.html         # マニュアルページ
 │   ├── notify.html         # 通知ページ
 │   ├── promotion.html      # プロモーションページ
+│   ├── usecases_showcase.html # ユースケースショーケースページ
 │   ├── api/openai.js       # OpenAI APIクライアント
 │   └── icons/              # PWAアイコン・スプラッシュ画像
-├── tests/e2e/              # Playwright E2Eテスト（8 spec files）
+├── tests/e2e/              # Playwright E2Eテスト（7 spec files）
 ├── tools/                  # ユーティリティ（スクリーンショット撮影等）
 ├── api/                    # Vercel Serverless Functions
 ├── scripts/                # ビルド・生成スクリプト
