@@ -73,7 +73,7 @@ sbpr/
 
 ## 注意点・非自明なパターン
 
-- **version.js / sw.js CACHE_NAME は自動生成** — `scripts/generate_version.sh` が `package.json` のバージョンとビルドハッシュから生成する。手動編集不可。
+- **version.js / sw.js は必ずコミットに含める** — この2ファイルは `scripts/generate_version.sh` による自動生成だが、コミット対象である。`local_app/` 配下のファイルを変更したときは `git status` で `sw.js` / `version.js` に差分がないか確認し、あれば同じコミットに含めること。
 - **Docker Compose はワークツリー対応** — 環境変数（`COMPOSE_PROJECT_NAME`, `SBPR_SUBNET`, `SBPR_PORT`）でプロジェクト名・サブネットを分離。ワークツリー間の衝突を回避。
 - **テストフレームワークが2系統** — `local_app/e2e.test.js`（Jest + Puppeteer、レガシー）と `tests/e2e/`（Playwright、現行）が共存。新規テストは Playwright で書く。
 - **nginx が `/openai/` をプロキシ** — CORS 回避のため、同一オリジンの `/openai/*` を `api.openai.com` に転送。SSE ストリーミング対応（300秒タイムアウト）。
