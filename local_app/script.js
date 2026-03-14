@@ -954,16 +954,55 @@ function initChartSettings() {
     });
 }
 
+function applyCustomPeriod(inputEl, buttons, setPeriod, refresh) {
+    const val = parseInt(inputEl.value, 10);
+    if (!val || val < 1) return;
+
+    const presetValues = Array.from(buttons).map(b => b.dataset.period);
+    const matchingBtn = Array.from(buttons).find(b => b.dataset.period === String(val));
+
+    buttons.forEach(b => b.classList.remove('active'));
+    inputEl.classList.remove('active');
+
+    if (matchingBtn) {
+        matchingBtn.classList.add('active');
+        inputEl.value = '';
+    } else {
+        inputEl.classList.add('active');
+    }
+
+    setPeriod(val);
+    refresh();
+}
+
 function initChartControls() {
     const buttons = document.querySelectorAll('#chart-period-controls button');
+    const customInput = document.getElementById('chart-custom-period');
+
     buttons.forEach(btn => {
         btn.addEventListener('click', () => {
             buttons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            if (customInput) {
+                customInput.classList.remove('active');
+                customInput.value = '';
+            }
             currentPeriod = btn.dataset.period === 'all' ? 'all' : Number(btn.dataset.period);
             refreshChart();
         });
     });
+
+    if (customInput) {
+        customInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyCustomPeriod(customInput, buttons, (v) => { currentPeriod = v; }, refreshChart);
+            }
+        });
+        customInput.addEventListener('blur', () => {
+            applyCustomPeriod(customInput, buttons, (v) => { currentPeriod = v; }, refreshChart);
+        });
+    }
 }
 
 // ===== Chart.js 遅延読み込み =====
@@ -2138,13 +2177,32 @@ async function initAIDiagnosis() {
     document.getElementById('ai-clear-btn').addEventListener('click', clearAIConversation);
 
     const aiPeriodButtons = document.querySelectorAll('#ai-period-controls button');
+    const aiCustomInput = document.getElementById('ai-custom-period');
+
     aiPeriodButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             aiPeriodButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            if (aiCustomInput) {
+                aiCustomInput.classList.remove('active');
+                aiCustomInput.value = '';
+            }
             currentAIPeriod = btn.dataset.period === 'all' ? 'all' : Number(btn.dataset.period);
         });
     });
+
+    if (aiCustomInput) {
+        const applyAICustom = () => {
+            applyCustomPeriod(aiCustomInput, aiPeriodButtons, (v) => { currentAIPeriod = v; }, () => {});
+        };
+        aiCustomInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyAICustom();
+            }
+        });
+        aiCustomInput.addEventListener('blur', applyAICustom);
+    }
 
     const aiInput = document.getElementById('ai-input');
     aiInput.addEventListener('keydown', (e) => {

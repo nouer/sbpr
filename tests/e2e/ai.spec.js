@@ -115,12 +115,13 @@ test('E2E-034: AI診断タブに期間選択ボタンが表示される', async 
         }));
     });
 
-    expect(buttons).toHaveLength(4);
+    expect(buttons).toHaveLength(5);
     expect(buttons[0].period).toBe('7');
     expect(buttons[0].isActive).toBe(true);
-    expect(buttons[1].period).toBe('30');
-    expect(buttons[2].period).toBe('90');
-    expect(buttons[3].period).toBe('all');
+    expect(buttons[1].period).toBe('14');
+    expect(buttons[2].period).toBe('30');
+    expect(buttons[3].period).toBe('90');
+    expect(buttons[4].period).toBe('all');
 
     await page.evaluate(() => {
         localStorage.removeItem('sbpr_openai_api_key');
@@ -153,6 +154,61 @@ test('E2E-035: AI診断の期間選択ボタン切替', async ({ page }) => {
 
     expect(result.find(b => b.period === '7').isActive).toBe(false);
     expect(result.find(b => b.period === '30').isActive).toBe(true);
+
+    await page.evaluate(() => {
+        localStorage.removeItem('sbpr_openai_api_key');
+    });
+});
+
+test('E2E-044: AI診断タブのカスタム期間入力で期間が設定される', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await page.evaluate(() => {
+        localStorage.setItem('sbpr_openai_api_key', 'sk-test-dummy-key');
+    });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await waitForAppReady(page);
+
+    await page.click('[data-tab="ai"]');
+    await page.waitForSelector('#tab-ai.active', { timeout: 5000 });
+
+    // カスタム入力欄が存在する
+    const input = page.locator('#ai-custom-period');
+    await expect(input).toBeVisible();
+
+    // 60日を入力してEnter
+    await input.fill('60');
+    await input.press('Enter');
+    await new Promise(r => setTimeout(r, 300));
+
+    // currentAIPeriodが60に設定される
+    const period = await page.evaluate(() => currentAIPeriod);
+    expect(period).toBe(60);
+
+    // プリセットボタンのactiveが全て外れる
+    const anyPresetActive = await page.evaluate(() => {
+        const btns = document.querySelectorAll('#ai-period-controls button');
+        return Array.from(btns).some(b => b.classList.contains('active'));
+    });
+    expect(anyPresetActive).toBe(false);
+
+    // カスタム入力にactiveクラスが付く
+    const inputActive = await page.evaluate(() => {
+        return document.getElementById('ai-custom-period').classList.contains('active');
+    });
+    expect(inputActive).toBe(true);
+
+    // プリセットボタンをクリックするとカスタム入力のactiveが外れる
+    await page.click('#ai-period-controls button[data-period="7"]');
+    await new Promise(r => setTimeout(r, 300));
+
+    const stateAfterPreset = await page.evaluate(() => {
+        const inp = document.getElementById('ai-custom-period');
+        return { active: inp.classList.contains('active'), value: inp.value };
+    });
+    expect(stateAfterPreset.active).toBe(false);
+    expect(stateAfterPreset.value).toBe('');
 
     await page.evaluate(() => {
         localStorage.removeItem('sbpr_openai_api_key');

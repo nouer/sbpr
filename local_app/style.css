@@ -689,6 +689,35 @@ body {
     margin-bottom: 8px;
 }
 
+.custom-period-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+}
+.custom-period-row input {
+    width: 80px;
+    padding: 6px 10px;
+    border: 1px solid var(--gray-300);
+    border-radius: 20px;
+    font-size: 0.85em;
+    text-align: center;
+    transition: all 0.2s;
+}
+.custom-period-row input:focus {
+    outline: none;
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.custom-period-row input.active {
+    border-color: #0d9488;
+    background: rgba(13, 148, 136, 0.08);
+}
+.custom-period-row .custom-period-suffix {
+    font-size: 0.85em;
+    color: var(--gray-600);
+}
+
 .linestyle-toggle-label {
     display: flex;
     align-items: center;

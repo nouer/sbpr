@@ -1184,12 +1184,13 @@ describe('E2E Test: sbpr App', () => {
             }));
         });
 
-        expect(buttons).toHaveLength(4);
+        expect(buttons).toHaveLength(5);
         expect(buttons[0].period).toBe('7');
         expect(buttons[0].isActive).toBe(true);
-        expect(buttons[1].period).toBe('30');
-        expect(buttons[2].period).toBe('90');
-        expect(buttons[3].period).toBe('all');
+        expect(buttons[1].period).toBe('14');
+        expect(buttons[2].period).toBe('30');
+        expect(buttons[3].period).toBe('90');
+        expect(buttons[4].period).toBe('all');
 
         await page.evaluate(() => {
             localStorage.removeItem('sbpr_openai_api_key');
