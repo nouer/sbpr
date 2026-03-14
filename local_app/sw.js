@@ -3,7 +3,7 @@
  * アセットキャッシュによる完全オフライン対応
  */
 
-const CACHE_NAME = 'sbpr-v1.0.0-1773468396';
+const CACHE_NAME = 'sbpr-v1.0.0-1773470856';
 
 const PRECACHE_ASSETS = [
     '/',
@@ -18,13 +18,19 @@ const PRECACHE_ASSETS = [
     '/icons/icon-maskable.png',
     '/icons/splash/splash-640x1136.png',
     '/icons/splash/splash-750x1334.png',
+    '/icons/splash/splash-1242x2208.png',
     '/icons/splash/splash-1125x2436.png',
     '/icons/splash/splash-828x1792.png',
+    '/icons/splash/splash-1242x2688.png',
     '/icons/splash/splash-1170x2532.png',
     '/icons/splash/splash-1179x2556.png',
+    '/icons/splash/splash-1284x2778.png',
+    '/icons/splash/splash-1206x2622.png',
     '/icons/splash/splash-1290x2796.png',
     '/icons/splash/splash-1320x2868.png',
+    '/icons/splash/splash-1488x2266.png',
     '/icons/splash/splash-1536x2048.png',
+    '/icons/splash/splash-1640x2360.png',
     '/icons/splash/splash-1668x2388.png',
     '/icons/splash/splash-2048x2732.png',
     'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js',

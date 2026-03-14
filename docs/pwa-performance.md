@@ -192,6 +192,49 @@ iOSではPWAスタンドアロンモードで `apple-touch-startup-image` メタ
 - `<link rel="apple-touch-startup-image">` にmedia queryを付けてデバイスごとの画像を指定
 - media queryは `device-width`, `device-height`, `-webkit-device-pixel-ratio` の組み合わせ
 
+### media queryの必須要素
+
+iOSがスプラッシュ画像を認識するには、media queryに以下の要素が**すべて**必要:
+
+```html
+<link rel="apple-touch-startup-image" href="/icons/splash/splash-1179x2556.png"
+      media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+```
+
+| 要素 | 必須 | 備考 |
+|------|------|------|
+| `screen and` | Yes | メディアタイプの明示 |
+| `device-width` | Yes | CSSピクセル幅（=画像幅÷pixel ratio） |
+| `device-height` | Yes | CSSピクセル高（=画像高÷pixel ratio） |
+| `-webkit-device-pixel-ratio` | Yes | 2x or 3x |
+| `orientation: portrait` | Yes | **欠落するとスプラッシュが表示されない** |
+
+> **過去の不具合（2026/3/9〜3/14）:** `screen and` プレフィックスと `(orientation: portrait)` が欠落しており、スプラッシュ画面が表示されなかった。参考実装: [Evan Bacon gist](https://gist.github.com/EvanBacon/7fd4dc3be3d00096579bb0b134c56ec7)、[pwa-asset-generator](https://github.com/elegantapp/pwa-asset-generator)
+
+### 対応デバイス一覧（17種）
+
+| デバイス | 画像サイズ | CSS幅×高 | Ratio |
+|---------|----------|---------|-------|
+| iPhone SE1/5 | 640×1136 | 320×568 | 2x |
+| iPhone 6/7/8/SE2/SE3 | 750×1334 | 375×667 | 2x |
+| iPhone 6+/7+/8+ | 1242×2208 | 414×736 | 3x |
+| iPhone X/XS/11Pro/12mini | 1125×2436 | 375×812 | 3x |
+| iPhone XR/11/12/13/14 | 828×1792 | 414×896 | 2x |
+| iPhone XS Max/11 Pro Max | 1242×2688 | 414×896 | 3x |
+| iPhone 12Pro/13/14 | 1170×2532 | 390×844 | 3x |
+| iPhone 14Pro/15/16 | 1179×2556 | 393×852 | 3x |
+| iPhone 13 Pro Max/14 Plus | 1284×2778 | 428×926 | 3x |
+| iPhone 16 Pro | 1206×2622 | 402×874 | 3x |
+| iPhone 14ProMax/15Plus/16Plus | 1290×2796 | 430×932 | 3x |
+| iPhone 16ProMax | 1320×2868 | 440×956 | 3x |
+| iPad Mini 6th | 1488×2266 | 744×1133 | 2x |
+| iPad | 1536×2048 | 768×1024 | 2x |
+| iPad 10th/Air | 1640×2360 | 820×1180 | 2x |
+| iPad Pro 11" | 1668×2388 | 834×1194 | 2x |
+| iPad Pro 12.9" | 2048×2732 | 1024×1366 | 2x |
+
+デバイスサイズの確認: [ios-resolution.com](https://www.ios-resolution.com/)
+
 ### 画像生成
 
 `scripts/generate_splash.py` で `local_app/icons/icon-512.png` をベースにスプラッシュ画像を自動生成。
@@ -204,7 +247,7 @@ python3 scripts/generate_splash.py
 
 1. `scripts/generate_splash.py` の `SPLASH_SIZES` に新サイズを追加
 2. `python3 scripts/generate_splash.py` を実行
-3. `local_app/index.html` に `<link rel="apple-touch-startup-image">` タグを追加
+3. `local_app/index.html` に `<link rel="apple-touch-startup-image">` タグを追加（`screen and` + `orientation: portrait` を忘れないこと）
 4. `local_app/sw.js` の `PRECACHE_ASSETS` に新画像パスを追加
 5. ビルド実行
 
