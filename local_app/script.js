@@ -416,7 +416,8 @@ function initTabs() {
             buttons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+            const tabEl = document.getElementById(`tab-${tabId}`);
+            if (tabEl) tabEl.classList.add('active');
 
             if (tabId === 'chart') {
                 refreshChart();
@@ -434,7 +435,7 @@ function initTabs() {
  */
 function initForm() {
     const form = document.getElementById('bp-form');
-    form.addEventListener('submit', async (e) => {
+    if (form) form.addEventListener('submit', async (e) => {
         e.preventDefault();
         await saveRecord();
     });
@@ -444,8 +445,10 @@ function initForm() {
         saveNoMedicationBtn.addEventListener('click', saveNoMedicationRecord);
     }
 
-    document.getElementById('clear-memo-btn').addEventListener('click', () => {
-        document.getElementById('input-memo').value = '';
+    const clearMemoBtn = document.getElementById('clear-memo-btn');
+    if (clearMemoBtn) clearMemoBtn.addEventListener('click', () => {
+        const memoInput = document.getElementById('input-memo');
+        if (memoInput) memoInput.value = '';
     });
 }
 
@@ -454,6 +457,7 @@ function initForm() {
  */
 function setDefaultDateTime() {
     const input = document.getElementById('input-datetime');
+    if (!input) return;
     input.value = formatDateTimeLocal(new Date());
 }
 
@@ -468,11 +472,16 @@ async function prefillFormWithLastRecord(records) {
         if (records.length === 0) return;
 
         const last = records[0];
-        document.getElementById('input-systolic').value = last.systolic;
-        document.getElementById('input-diastolic').value = last.diastolic;
-        document.getElementById('input-pulse').value = last.pulse != null ? last.pulse : '';
-        document.getElementById('input-weight').value = last.weight != null ? last.weight : '';
-        document.getElementById('input-memo').value = last.memo || '';
+        const systolicEl = document.getElementById('input-systolic');
+        const diastolicEl = document.getElementById('input-diastolic');
+        const pulseEl = document.getElementById('input-pulse');
+        const weightEl = document.getElementById('input-weight');
+        const memoEl = document.getElementById('input-memo');
+        if (systolicEl) systolicEl.value = last.systolic;
+        if (diastolicEl) diastolicEl.value = last.diastolic;
+        if (pulseEl) pulseEl.value = last.pulse != null ? last.pulse : '';
+        if (weightEl) weightEl.value = last.weight != null ? last.weight : '';
+        if (memoEl) memoEl.value = last.memo || '';
         setLevelValue('input-mood', last.mood || null);
         setLevelValue('input-condition', last.condition || null);
     } catch (e) {
@@ -517,7 +526,9 @@ async function hashString(str) {
 
 function showToast(text, type) {
     const el = document.getElementById('toast');
-    document.getElementById('toast-text').textContent = text;
+    const textEl = document.getElementById('toast-text');
+    if (!el || !textEl) return;
+    textEl.textContent = text;
     el.className = `toast ${type}`;
     el.style.display = 'block';
     clearTimeout(_toastTimer);
@@ -527,8 +538,10 @@ function showToast(text, type) {
 }
 
 function initToast() {
-    document.getElementById('toast-close').addEventListener('click', () => {
-        document.getElementById('toast').style.display = 'none';
+    const closeBtn = document.getElementById('toast-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+        const toast = document.getElementById('toast');
+        if (toast) toast.style.display = 'none';
     });
 }
 
@@ -536,12 +549,19 @@ function initToast() {
  * 記録を保存
  */
 async function saveRecord() {
-    const systolic = document.getElementById('input-systolic').value;
-    const diastolic = document.getElementById('input-diastolic').value;
-    const pulse = document.getElementById('input-pulse').value;
-    const weight = document.getElementById('input-weight').value;
-    const memo = document.getElementById('input-memo').value.trim();
-    const datetime = document.getElementById('input-datetime').value;
+    const systolicEl = document.getElementById('input-systolic');
+    const diastolicEl = document.getElementById('input-diastolic');
+    const pulseEl = document.getElementById('input-pulse');
+    const weightEl = document.getElementById('input-weight');
+    const memoEl = document.getElementById('input-memo');
+    const datetimeEl = document.getElementById('input-datetime');
+    if (!systolicEl || !diastolicEl) return;
+    const systolic = systolicEl.value;
+    const diastolic = diastolicEl.value;
+    const pulse = pulseEl ? pulseEl.value : '';
+    const weight = weightEl ? weightEl.value : '';
+    const memo = memoEl ? memoEl.value.trim() : '';
+    const datetime = datetimeEl ? datetimeEl.value : '';
     const mood = getLevelValue('input-mood');
     const condition = getLevelValue('input-condition');
 
@@ -558,6 +578,7 @@ async function saveRecord() {
     }
 
     const saveBtn = document.getElementById('save-btn');
+    if (!saveBtn) return;
     const originalLabel = saveBtn.textContent;
     saveBtn.textContent = '保存中...';
     saveBtn.disabled = true;
@@ -647,6 +668,7 @@ async function saveNoMedicationRecord() {
     };
 
     const noMedBtn = document.getElementById('save-no-medication-btn');
+    if (!noMedBtn) return;
     const noMedOriginalLabel = noMedBtn.textContent;
     noMedBtn.textContent = '保存中...';
     noMedBtn.disabled = true;
@@ -687,6 +709,7 @@ async function refreshAll(records) {
 async function refreshRecentRecords(records) {
     if (!records) records = await getAllRecords();
     const container = document.getElementById('recent-records');
+    if (!container) return;
     const recent = records.slice(0, 10);
 
     if (recent.length === 0) {
@@ -767,30 +790,40 @@ let pendingDeleteId = null;
 
 function confirmDeleteRecord(id) {
     pendingDeleteId = id;
-    document.getElementById('confirm-title').textContent = '記録の削除';
-    document.getElementById('confirm-message').textContent = 'この記録を削除しますか？';
-    document.getElementById('confirm-ok').textContent = '削除';
-    document.getElementById('confirm-ok').className = 'btn btn-danger';
-    document.getElementById('confirm-overlay').classList.add('show');
-    document.getElementById('confirm-ok').onclick = async () => {
-        await deleteRecord(pendingDeleteId);
-        closeConfirmDialog();
-        await refreshAll();
-        await refreshHistory();
-        await updateAppBadge();
-    };
+    const overlay = document.getElementById('confirm-overlay');
+    if (!overlay) return;
+    const titleEl = document.getElementById('confirm-title');
+    const messageEl = document.getElementById('confirm-message');
+    const okBtn = document.getElementById('confirm-ok');
+    if (titleEl) titleEl.textContent = '記録の削除';
+    if (messageEl) messageEl.textContent = 'この記録を削除しますか？';
+    if (okBtn) {
+        okBtn.textContent = '削除';
+        okBtn.className = 'btn btn-danger';
+        okBtn.onclick = async () => {
+            await deleteRecord(pendingDeleteId);
+            closeConfirmDialog();
+            await refreshAll();
+            await refreshHistory();
+            await updateAppBadge();
+        };
+    }
+    overlay.classList.add('show');
 }
 
 function closeConfirmDialog() {
-    document.getElementById('confirm-overlay').classList.remove('show');
+    const overlay = document.getElementById('confirm-overlay');
+    if (overlay) overlay.classList.remove('show');
     pendingDeleteId = null;
 }
 
 // ===== 記録編集 =====
 
 function initEditDialog() {
-    document.getElementById('edit-cancel').addEventListener('click', closeEditDialog);
-    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+    const editCancel = document.getElementById('edit-cancel');
+    const editForm = document.getElementById('edit-form');
+    if (editCancel) editCancel.addEventListener('click', closeEditDialog);
+    if (editForm) editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await saveEditRecord();
     });
@@ -804,29 +837,42 @@ async function openEditDialog(id) {
     const bpFields = document.getElementById('edit-bp-fields');
     if (bpFields) bpFields.style.display = isNoMed ? 'none' : '';
 
-    document.getElementById('edit-id').value = record.id;
-    document.getElementById('edit-datetime').value = formatDateTimeLocal(new Date(record.measuredAt));
-    document.getElementById('edit-systolic').value = record.systolic ?? '';
-    document.getElementById('edit-diastolic').value = record.diastolic ?? '';
-    document.getElementById('edit-pulse').value = record.pulse || '';
-    document.getElementById('edit-weight').value = record.weight != null ? record.weight : '';
-    document.getElementById('edit-memo').value = record.memo || '';
+    const editId = document.getElementById('edit-id');
+    const editDatetime = document.getElementById('edit-datetime');
+    const editSystolic = document.getElementById('edit-systolic');
+    const editDiastolic = document.getElementById('edit-diastolic');
+    const editPulse = document.getElementById('edit-pulse');
+    const editWeight = document.getElementById('edit-weight');
+    const editMemo = document.getElementById('edit-memo');
+    const editOverlay = document.getElementById('edit-overlay');
+    if (editId) editId.value = record.id;
+    if (editDatetime) editDatetime.value = formatDateTimeLocal(new Date(record.measuredAt));
+    if (editSystolic) editSystolic.value = record.systolic ?? '';
+    if (editDiastolic) editDiastolic.value = record.diastolic ?? '';
+    if (editPulse) editPulse.value = record.pulse || '';
+    if (editWeight) editWeight.value = record.weight != null ? record.weight : '';
+    if (editMemo) editMemo.value = record.memo || '';
     setLevelValue('edit-mood', record.mood || null);
     setLevelValue('edit-condition', record.condition || null);
-    document.getElementById('edit-overlay').classList.add('show');
+    if (editOverlay) editOverlay.classList.add('show');
 }
 
 function closeEditDialog() {
-    document.getElementById('edit-overlay').classList.remove('show');
+    const overlay = document.getElementById('edit-overlay');
+    if (overlay) overlay.classList.remove('show');
 }
 
 async function saveEditRecord() {
-    const id = document.getElementById('edit-id').value;
+    const editIdEl = document.getElementById('edit-id');
+    if (!editIdEl) return;
+    const id = editIdEl.value;
     const original = await getRecord(id);
     if (!original) return;
 
-    const memo = document.getElementById('edit-memo').value.trim();
-    const datetime = document.getElementById('edit-datetime').value;
+    const editMemoEl = document.getElementById('edit-memo');
+    const editDatetimeEl = document.getElementById('edit-datetime');
+    const memo = editMemoEl ? editMemoEl.value.trim() : '';
+    const datetime = editDatetimeEl ? editDatetimeEl.value : '';
 
     if (isNoMedicationRecord(original)) {
         const updated = {
@@ -847,10 +893,14 @@ async function saveEditRecord() {
         return;
     }
 
-    const systolic = document.getElementById('edit-systolic').value;
-    const diastolic = document.getElementById('edit-diastolic').value;
-    const pulse = document.getElementById('edit-pulse').value;
-    const weight = document.getElementById('edit-weight').value;
+    const editSystolicEl = document.getElementById('edit-systolic');
+    const editDiastolicEl = document.getElementById('edit-diastolic');
+    const editPulseEl = document.getElementById('edit-pulse');
+    const editWeightEl = document.getElementById('edit-weight');
+    const systolic = editSystolicEl ? editSystolicEl.value : '';
+    const diastolic = editDiastolicEl ? editDiastolicEl.value : '';
+    const pulse = editPulseEl ? editPulseEl.value : '';
+    const weight = editWeightEl ? editWeightEl.value : '';
     const mood = getLevelValue('edit-mood');
     const condition = getLevelValue('edit-condition');
 
@@ -906,16 +956,20 @@ function initChartModeControls() {
 
 function initLinestyleToggle() {
     const checkbox = document.getElementById('linestyle-swap');
+    if (!checkbox) return;
     checkbox.addEventListener('change', () => {
         lineStyleSwapped = checkbox.checked;
-        document.getElementById('linestyle-default').classList.toggle('active', !lineStyleSwapped);
-        document.getElementById('linestyle-swapped').classList.toggle('active', lineStyleSwapped);
+        const defaultEl = document.getElementById('linestyle-default');
+        const swappedEl = document.getElementById('linestyle-swapped');
+        if (defaultEl) defaultEl.classList.toggle('active', !lineStyleSwapped);
+        if (swappedEl) swappedEl.classList.toggle('active', lineStyleSwapped);
         refreshChart();
     });
 }
 
 function updateLinestyleToggleVisibility() {
     const toggle = document.getElementById('chart-linestyle-toggle');
+    if (!toggle) return;
     toggle.style.display = currentChartMode === 'daynight' ? 'flex' : 'none';
 }
 
@@ -934,11 +988,13 @@ function initChartTooltipDismiss() {
 function initChartSettings() {
     const dayInput = document.getElementById('input-day-start');
     const nightInput = document.getElementById('input-night-start');
+    if (!dayInput || !nightInput) return;
 
     dayInput.value = getDayStartHour();
     nightInput.value = getNightStartHour();
 
-    document.getElementById('save-chart-settings-btn').addEventListener('click', () => {
+    const saveChartBtn = document.getElementById('save-chart-settings-btn');
+    if (saveChartBtn) saveChartBtn.addEventListener('click', () => {
         const dayVal = parseInt(dayInput.value, 10);
         const nightVal = parseInt(nightInput.value, 10);
         if (isNaN(dayVal) || dayVal < 0 || dayVal > 23 || isNaN(nightVal) || nightVal < 0 || nightVal > 23) {
@@ -1615,19 +1671,24 @@ function updateWeightChart(records) {
 // ===== 履歴 =====
 
 function initFilterControls() {
-    document.getElementById('filter-from').addEventListener('change', refreshHistory);
-    document.getElementById('filter-to').addEventListener('change', refreshHistory);
-    document.getElementById('filter-clear-btn').addEventListener('click', () => {
-        document.getElementById('filter-from').value = '';
-        document.getElementById('filter-to').value = '';
+    const filterFrom = document.getElementById('filter-from');
+    const filterTo = document.getElementById('filter-to');
+    const clearBtn = document.getElementById('filter-clear-btn');
+    if (filterFrom) filterFrom.addEventListener('change', refreshHistory);
+    if (filterTo) filterTo.addEventListener('change', refreshHistory);
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+        if (filterFrom) filterFrom.value = '';
+        if (filterTo) filterTo.value = '';
         refreshHistory();
     });
 }
 
 async function refreshHistory() {
     const allRecords = await getAllRecords();
-    const fromStr = document.getElementById('filter-from').value;
-    const toStr = document.getElementById('filter-to').value;
+    const filterFromEl = document.getElementById('filter-from');
+    const filterToEl = document.getElementById('filter-to');
+    const fromStr = filterFromEl ? filterFromEl.value : '';
+    const toStr = filterToEl ? filterToEl.value : '';
 
     let records = allRecords;
     if (fromStr) {
@@ -1641,6 +1702,7 @@ async function refreshHistory() {
     }
 
     const container = document.getElementById('history-records');
+    if (!container) return;
     if (records.length === 0) {
         container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>該当する記録がありません</p></div>';
         return;
@@ -1652,13 +1714,18 @@ async function refreshHistory() {
 // ===== 設定（エクスポート/インポート/全削除） =====
 
 function initSettingsControls() {
-    document.getElementById('export-btn').addEventListener('click', exportData);
-    document.getElementById('import-btn').addEventListener('click', () => {
-        document.getElementById('import-file').click();
+    const exportBtn = document.getElementById('export-btn');
+    const importBtn = document.getElementById('import-btn');
+    const importFile = document.getElementById('import-file');
+    const deleteAllBtn = document.getElementById('delete-all-btn');
+    const confirmCancel = document.getElementById('confirm-cancel');
+    if (exportBtn) exportBtn.addEventListener('click', exportData);
+    if (importBtn) importBtn.addEventListener('click', () => {
+        if (importFile) importFile.click();
     });
-    document.getElementById('import-file').addEventListener('change', importData);
-    document.getElementById('delete-all-btn').addEventListener('click', confirmDeleteAll);
-    document.getElementById('confirm-cancel').addEventListener('click', closeConfirmDialog);
+    if (importFile) importFile.addEventListener('change', importData);
+    if (deleteAllBtn) deleteAllBtn.addEventListener('click', confirmDeleteAll);
+    if (confirmCancel) confirmCancel.addEventListener('click', closeConfirmDialog);
 
     const checkUpdateBtn = document.getElementById('check-update-btn');
     if (checkUpdateBtn) {
@@ -1907,6 +1974,7 @@ function initProfile() {
     const birthdayInput = document.getElementById('input-birthday');
     const genderInput = document.getElementById('input-gender');
     const heightInput = document.getElementById('input-height');
+    if (!birthdayInput || !genderInput || !heightInput) return;
 
     const savedBirthday = localStorage.getItem(LS_KEY_BIRTHDAY) || '';
     const savedGender = localStorage.getItem(LS_KEY_GENDER) || '';
@@ -1916,7 +1984,8 @@ function initProfile() {
     if (savedGender) genderInput.value = savedGender;
     if (savedHeight) heightInput.value = savedHeight;
 
-    document.getElementById('save-profile-btn').addEventListener('click', () => {
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    if (saveProfileBtn) saveProfileBtn.addEventListener('click', () => {
         localStorage.setItem(LS_KEY_BIRTHDAY, birthdayInput.value);
         localStorage.setItem(LS_KEY_GENDER, genderInput.value);
         localStorage.setItem(LS_KEY_HEIGHT, heightInput.value);
@@ -1960,6 +2029,7 @@ function formatProfileForPrompt() {
 
 function initAISettings() {
     const apiKeyInput = document.getElementById('input-api-key');
+    if (!apiKeyInput) return;
     const savedKey = localStorage.getItem(LS_KEY_API_KEY) || '';
     if (savedKey) {
         apiKeyInput.value = savedKey;
@@ -1967,11 +2037,12 @@ function initAISettings() {
 
     const aiMemoInput = document.getElementById('input-ai-memo');
     const savedMemo = localStorage.getItem(LS_KEY_AI_MEMO) || '';
-    if (savedMemo) {
+    if (aiMemoInput && savedMemo) {
         aiMemoInput.value = savedMemo;
     }
 
-    document.getElementById('save-api-key-btn').addEventListener('click', () => {
+    const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+    if (saveApiKeyBtn) saveApiKeyBtn.addEventListener('click', () => {
         const key = apiKeyInput.value.trim();
         if (!key) {
             showToast('APIキーを入力してください', 'error');
@@ -1982,18 +2053,21 @@ function initAISettings() {
         updateAITabVisibility();
     });
 
-    document.getElementById('clear-api-key-btn').addEventListener('click', () => {
+    const clearApiKeyBtn = document.getElementById('clear-api-key-btn');
+    if (clearApiKeyBtn) clearApiKeyBtn.addEventListener('click', () => {
         localStorage.removeItem(LS_KEY_API_KEY);
         apiKeyInput.value = '';
         showToast('APIキーを削除しました', 'success');
         updateAITabVisibility();
     });
 
-    document.getElementById('toggle-api-key-btn').addEventListener('click', () => {
+    const toggleApiKeyBtn = document.getElementById('toggle-api-key-btn');
+    if (toggleApiKeyBtn) toggleApiKeyBtn.addEventListener('click', () => {
         apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
     });
 
-    document.getElementById('save-ai-memo-btn').addEventListener('click', () => {
+    const saveAiMemoBtn = document.getElementById('save-ai-memo-btn');
+    if (saveAiMemoBtn) saveAiMemoBtn.addEventListener('click', () => {
         const memo = aiMemoInput.value.trim();
         localStorage.setItem(LS_KEY_AI_MEMO, memo);
         showToast('備考を保存しました', 'success');
@@ -2073,6 +2147,7 @@ function openNotificationPage() {
 
 function initNotification() {
     const enabledCheckbox = document.getElementById('setting-notify-enabled');
+    if (!enabledCheckbox) return;
     const saved = localStorage.getItem(LS_KEY_NOTIFY_ENABLED);
     enabledCheckbox.checked = saved !== '0';
 
@@ -2082,7 +2157,8 @@ function initNotification() {
         } catch (err) {}
     });
 
-    document.getElementById('btn-open-notification').addEventListener('click', openNotificationPage);
+    const openBtn = document.getElementById('btn-open-notification');
+    if (openBtn) openBtn.addEventListener('click', openNotificationPage);
 }
 
 function getApiKey() {
@@ -2172,9 +2248,12 @@ let aiConversation = [];
 let aiIsStreaming = false;
 
 async function initAIDiagnosis() {
-    document.getElementById('ai-start-btn').addEventListener('click', startAIDiagnosis);
-    document.getElementById('ai-send-btn').addEventListener('click', sendFollowUp);
-    document.getElementById('ai-clear-btn').addEventListener('click', clearAIConversation);
+    const aiStartBtn = document.getElementById('ai-start-btn');
+    const aiSendBtn = document.getElementById('ai-send-btn');
+    const aiClearBtn = document.getElementById('ai-clear-btn');
+    if (aiStartBtn) aiStartBtn.addEventListener('click', startAIDiagnosis);
+    if (aiSendBtn) aiSendBtn.addEventListener('click', sendFollowUp);
+    if (aiClearBtn) aiClearBtn.addEventListener('click', clearAIConversation);
 
     const aiPeriodButtons = document.querySelectorAll('#ai-period-controls button');
     const aiCustomInput = document.getElementById('ai-custom-period');
@@ -2205,7 +2284,7 @@ async function initAIDiagnosis() {
     }
 
     const aiInput = document.getElementById('ai-input');
-    aiInput.addEventListener('keydown', (e) => {
+    if (aiInput) aiInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             if (!aiIsStreaming && aiInput.value.trim()) {
@@ -2361,6 +2440,7 @@ async function startAIDiagnosis() {
 
 async function sendFollowUp() {
     const input = document.getElementById('ai-input');
+    if (!input) return;
     const text = input.value.trim();
     if (!text || aiIsStreaming) return;
 
@@ -2533,6 +2613,7 @@ async function sendSuggestion(text) {
 
 function renderAIChatMessages(streaming = false) {
     const container = document.getElementById('ai-chat-messages');
+    if (!container) return;
     const emptyState = document.getElementById('ai-chat-empty');
 
     if (aiConversation.length === 0) {
@@ -2590,12 +2671,15 @@ async function clearAIConversation() {
     await deleteAIConversation();
     renderAIChatMessages();
     setAIStatus('', '');
-    document.getElementById('ai-input').value = '';
-    document.getElementById('ai-followup-row').style.display = 'none';
+    const aiInput = document.getElementById('ai-input');
+    const followupRow = document.getElementById('ai-followup-row');
+    if (aiInput) aiInput.value = '';
+    if (followupRow) followupRow.style.display = 'none';
 }
 
 function setAIStatus(text, type) {
     const el = document.getElementById('ai-status');
+    if (!el) return;
     el.textContent = text;
     el.className = 'ai-status' + (type ? ' ' + type : '');
 }
@@ -2604,6 +2688,7 @@ function setAIInputEnabled(enabled) {
     const row = document.getElementById('ai-followup-row');
     const input = document.getElementById('ai-input');
     const sendBtn = document.getElementById('ai-send-btn');
+    if (!row || !input || !sendBtn) return;
     const hasResponse = aiConversation.some(m => m.role === 'assistant' && m.content);
 
     if (hasResponse && enabled) {
